@@ -1,0 +1,3 @@
+When i experience error in connecting to internet on vscode python bots like (New Key &&&);;;;;;;;;
+I expanded thr console width and it worked.
+ 
