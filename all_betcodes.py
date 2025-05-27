@@ -76,7 +76,7 @@ def get_bet_codes(set_date):
     results = []
 
     # Loop through pages 1 to 3
-    for page_num in range(2, 4):
+    for page_num in range(1, 4):
         url = f"https://convertbetcodes.com/c/free-bet-codes-for-today?page={page_num}"
         logger.info(f"Scraping page {page_num}: {url}")
 
