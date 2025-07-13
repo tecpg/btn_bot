@@ -90,7 +90,7 @@ def get_result_by_score(pick, score):
 
 
 def check_odd_range(value):
-    return 1.50 <= value <= 4.0
+    return 1.80 <= value <= 4.0
 
 
 

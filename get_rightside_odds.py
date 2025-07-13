@@ -170,8 +170,6 @@ def get_bet_codes(set_date):
                         "result": ""
                     }
 
-
-
                     # Append result to the results list
                     results.append(result)
                     card_index += 1
@@ -236,7 +234,7 @@ def connect_server(csv_filename):
                         # Ensure booking_code_id is an integer
                         row[8] = int(row[8])
 
-                        print(f"Inserting row: {row}")
+                        # print(f"Inserting row: {row}")
                         cursor.execute(
                             '''INSERT INTO booking_codes 
                             (site, code, odd, rate, email, price, post_time, post_date, booking_code_id, slip_result_link, platform_logo_link, result)

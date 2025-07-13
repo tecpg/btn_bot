@@ -151,7 +151,7 @@ def get_bet_codes(set_date):
                     # Forming the result for this card
                     try:
                         numeric_odds = float(odds)  # Convert the string to a float
-                        price = 'premium' if numeric_odds > 100 else 'free'
+                        price = 'premium' if numeric_odds > 1000 else 'free'
                     except (ValueError, TypeError):
                         price = 'free'  # Fallback if conversion fails
 
@@ -236,7 +236,7 @@ def connect_server(csv_filename):
                         # Ensure booking_code_id is an integer
                         row[8] = int(row[8])
 
-                        print(f"Inserting row: {row}")
+                        # print(f"Inserting row: {row}")
                         cursor.execute(
                             '''INSERT INTO booking_codes 
                             (site, code, odd, rate, email, price, post_time, post_date, booking_code_id, slip_result_link, platform_logo_link, result)

@@ -30,11 +30,10 @@ headers = {**random.choice(headers_list), **additional_headers}
 # URL
 base_url = (
     "https://convertbetcodes.com/c/free-predictions?"
-    "team=&sports=soccer&markets%5B%5D=gg_ng&"
-    "odds_range%5Bstart%5D=1.0&odds_range%5Bend%5D=5.5&"
+    "team=&sports=soccer&markets%5B%5D=over_under&"
+    "odds_range%5Bstart%5D=1.0&odds_range%5Bend%5D=2.0&"
     f"playing={set_date}&popularity=1&sport=1&page="
 )
-
 # Fetch & parse page
 response = requests.get(base_url, headers=headers)
 soup = BeautifulSoup(response.content, 'html.parser')
