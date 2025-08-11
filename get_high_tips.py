@@ -28,9 +28,18 @@ additional_headers = {
 headers = {**random.choice(headers_list), **additional_headers}
 
 # URL
+market_1x2 = "_1x2"
+market_over = "over_under"
+market_dc = "double_chance"
+market_gg_bts = "gg_ng_2_plus_goals"
+market_gg_ng ="gg_ng"
+market_dnb ="draw_no_bet"
+
+#  "https://convertbetcodes.com/c/free-predictions?team=&sports=soccer&markets%5B%5D=over_under&"odds_range%5Bstart%5D=1.0&odds_range%5Bend%5D=2.0&f"playing={set_date}&popularity=1&sport=1&page="
+#https://convertbetcodes.com/c/free-predictions?team=&sports=soccer&markets%5B%5D=double_chance&odds_range%5Bstart%5D=&odds_range%5Bend%5D=2&playing=2025-07-25&popularity=1#google_vignette
 base_url = (
     "https://convertbetcodes.com/c/free-predictions?"
-    "team=&sports=soccer&markets%5B%5D=over_under&"
+    "team=&sports=soccer&markets%5B%5D=draw_no_bet&"
     "odds_range%5Bstart%5D=1.0&odds_range%5Bend%5D=2.0&"
     f"playing={set_date}&popularity=1&sport=1&page="
 )

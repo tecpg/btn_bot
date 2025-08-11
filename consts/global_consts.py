@@ -102,32 +102,10 @@ MY_HEARDER = headers.update(additional_headers)
  
 
 #cvs file names
-JACKPOT_CSV = 'csv_files/jackpot_data.csv'
-TELEGRAM_BOT_CSV = "csv_files/1x2bet-code.csv"
-BLOG_POST_TIPS_CSV= "csv_files/1x2bet-code.csv"
-ODDSLOT_CSV = "csv_files/oddslot_data.csv"
-PROTIPS_CSV = "csv_files_protips.csv"
-HIGHODDS_CSV = "csv_files/highodds.csv"
-BET99_CSV = "csv_files/bet99.csv"
-BET99_BETDAY_CSV = "csv_files/bet99_betday.csv"
-BET99_DRAWS_CSV = "csv_files/bet99_draws.csv"
-BET99_OVERGOALS_CSV = "csv_files/bet99_overgoals.csv"
-BETNUM_CSV = "csv_files/betnum.csv"
-SAFE_BET_CSV = "csv_files/safe_bet.csv"
-SAFE_BET_BTTS_CSV = "csv_files/safe_btts.csv"
-SAFE_BET_DC_CSV = "csv_files/safe_dc.csv"
-SAFE_BET_OVERGOALS_CSV = "csv_files/safe_bet_overgoals.csv"
-TIPSBET_CSV = "csv_files/tipsbet_data.csv"
-VENASBET_2_5_CSV = "csv_files/venasbet_o_2_5_data.csv"
-VENASBET_1_5_CSV = "csv_files/venasbet_over_1_5data.csv"
-VENASBET_ACCA_CSV = "csv_files/venasbet_acca_data.csv"
-VENASBET_BTTS_CSV = "csv_files/venasbet_btts_data.csv"
-VENASBET_DNB_CSV = "csv_files/venasbet_dnb_data.csv"
-VENASBET_3_5_CSV = "csv_files/venasbet_u_3_5_data.csv"
-VENASBET_O_3_5_CSV = "csv_files/venasbet_o_3_5_data.csv"
-VENASBET_WAH_CSV = "csv_files/venasbet_wah.csv"
-VENASBET_HANDICAP_CSV = "csv_files/venasbet_handicap.csv"
+
+
 VIP_CSV = "csv_files/vip_tips_data.csv"
+BASKETBALL_CSV = "csv_files/basketball.csv"
 FEATURED_MATCH = "csv_files/featured_match.csv"
 
 

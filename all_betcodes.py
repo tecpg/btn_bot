@@ -206,11 +206,10 @@ def get_bet_codes(set_date):
 
 
 
-def connect_server(csv_filename):
-   
 
-    connection = None  # Initialize connection here
-    cursor = None      # Initialize cursor here
+def connect_server(csv_filename):
+    connection = None
+    cursor = None
 
     try:
         # Establish DB connection
@@ -225,6 +224,9 @@ def connect_server(csv_filename):
             record = cursor.fetchone()
             print(f"You're connected to database: {record}")
 
+            # Set longer lock wait timeout
+            cursor.execute("SET innodb_lock_wait_timeout = 60;")
+
             # Open CSV and insert data
             with open(csv_filename, "r", encoding='utf-8') as f:
                 csv_data = csv.reader(f)
@@ -233,32 +235,58 @@ def connect_server(csv_filename):
                 inserted = 0
                 for row in csv_data:
                     try:
-                        # Ensure booking_code_id is an integer
-                        row[8] = int(row[8])
+                        row[8] = int(row[8])  # Ensure booking_code_id is int
 
-                        # print(f"Inserting row: {row}")
                         cursor.execute(
                             '''INSERT INTO booking_codes 
                             (site, code, odd, rate, email, price, post_time, post_date, booking_code_id, slip_result_link, platform_logo_link, result)
                             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''', row
                         )
                         inserted += 1
+
+                        # Commit every 100 inserts to prevent long transaction locks
+                        if inserted % 100 == 0:
+                            connection.commit()
+
                     except ValueError:
                         print(f"Skipping row with invalid booking_code_id: {row}")
+                    except mysql.connector.Error as e:
+                        print(f"MySQL error inserting row: {e}")
+                        print(f"Row content: {row}")
                     except Exception as e:
                         print(f"Error inserting row: {e}")
+                        print(f"Row content: {row}")
 
+                # Final commit after all inserts
+                connection.commit()
                 print(f"Inserted {inserted} rows at {time.ctime()}")
 
             time.sleep(6)
             print(f"============== Bot is taking a nap... {time.ctime()} ================")
-            print("============Bot deleting previous tips from database==============")
+            print("============ Bot deleting previous tips from database ==============")
 
-            cursor.execute('''
-                DELETE t1 FROM booking_codes AS t1 
-                INNER JOIN booking_codes AS t2 
-                ON t1.code = t2.code AND t1.id < t2.id
-            ''')
+            # Delete duplicates (keep only the latest row for each code)
+            print("============ Bot deleting duplicate booking codes ==============")
+
+# Delete duplicates (keep only latest record per code)
+        delete_query = '''
+        DELETE FROM booking_codes 
+        WHERE id NOT IN (
+            SELECT * FROM (
+                SELECT MAX(id)
+                FROM booking_codes
+                GROUP BY code
+            ) AS temp_ids
+        )
+        '''
+
+        try:
+            cursor.execute(delete_query)
+            connection.commit()
+            print(f"{cursor.rowcount} duplicate record(s) deleted at {time.ctime()}")
+        except mysql.connector.Error as e:
+            print(f"Error deleting duplicates: {e}")
+
             print(f"{cursor.rowcount} duplicate record(s) deleted at {time.ctime()}")
 
             connection.commit()
@@ -270,13 +298,13 @@ def connect_server(csv_filename):
             print("Database does not exist.")
         else:
             print(f"MySQL error: {err}")
+
     finally:
         if cursor:
             cursor.close()
         if connection and connection.is_connected():
             connection.close()
             print("MySQL connection is closed.")
-
 
 def run():
     try:

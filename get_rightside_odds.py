@@ -252,12 +252,26 @@ def connect_server(csv_filename):
             print(f"============== Bot is taking a nap... {time.ctime()} ================")
             print("============Bot deleting previous tips from database==============")
 
-            cursor.execute('''
-                DELETE t1 FROM booking_codes AS t1 
-                INNER JOIN booking_codes AS t2 
-                ON t1.code = t2.code AND t1.id < t2.id
-            ''')
+            print("============ Bot deleting duplicate booking codes ==============")
+
+        # Delete duplicates (keep only latest record per code)
+        delete_query = '''
+        DELETE FROM booking_codes 
+        WHERE id NOT IN (
+            SELECT * FROM (
+                SELECT MAX(id)
+                FROM booking_codes
+                GROUP BY code
+            ) AS temp_ids
+        )
+        '''
+
+        try:
+            cursor.execute(delete_query)
+            connection.commit()
             print(f"{cursor.rowcount} duplicate record(s) deleted at {time.ctime()}")
+        except mysql.connector.Error as e:
+            print(f"Error deleting duplicates: {e}")
 
             connection.commit()
 

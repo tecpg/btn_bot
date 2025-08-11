@@ -3,7 +3,7 @@ from datetime import datetime
 from collections import defaultdict
 
 # === Step 1: Load predictions from tips.json ===
-with open('smart_odds_2025-07-07.json', 'r') as file:
+with open('smart_odds_2025-07-25.json', 'r') as file:
     predictions = json.load(file)
 
 # === Step 2: Parse and sort by datetime ===
