@@ -106,7 +106,13 @@ MY_HEARDER = headers.update(additional_headers)
 
 VIP_CSV = "csv_files/vip_tips_data.csv"
 BASKETBALL_CSV = "csv_files/basketball.csv"
+CORNERS_CSV = "csv_files/corners.csv"
+HOCKEY_CSV = "csv_files/hockey.csv"
 FEATURED_MATCH = "csv_files/featured_match.csv"
+SAFE_BET_DC_CSV = "csv_files/safe_dc.csv"
+SAFE_BET_OVERGOALS_CSV = "csv_files/safe_bet_overgoals.csv"
+TENNIS_CSV = "csv_files/tennis.csv"
+TIPSBET_CSV = "csv_files/tipsbet_data.csv"
 
 
 #telegram const
@@ -381,3 +387,17 @@ COUNTRIES = [
     {"2_code": "ZM", "3_code": "ZMB", "name": "Zambia"},
     {"2_code": "ZW", "3_code": "ZWE", "name": "Zimbabwe"}
 ]
+
+
+
+
+
+
+
+
+
+
+
+
+
+

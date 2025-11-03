@@ -30,9 +30,9 @@ from datetime import datetime
 
 
 date_ = gc.PRESENT_DAY_DATE
-p_date = gc.PRESENT_DAY_DMY
+p_date = gc.YESTERDAY_DATE
 
-csv_f = gc.BASKETBALL_CSV
+csv_f = gc.CORNERS_CSV
 
 additional_headers = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
@@ -97,7 +97,7 @@ def get_country_name_from_code(img_code, countries):
             return country["name"]
     return ""
 
-def scrape_basketball_data():
+def scrape_corners_data(set_date):
     all_rows = []
 
     with sync_playwright() as p:
@@ -111,7 +111,7 @@ def scrape_basketball_data():
         )
 
         page = context.new_page()
-        page.goto("https://www.forebet.com/en/tennis/predictions-today")
+        page.goto(f"https://www.forebet.com/en/football-predictions/corners/{set_date}")
         page.wait_for_selector("h1.frontH", timeout=60000)
         html = page.content()
         browser.close()
@@ -120,58 +120,89 @@ def scrape_basketball_data():
     games = soup.select(".rcnt")
     print(f"Found {len(games)} games.")
 
+    # ✅ Limit to 50 games
     for i, game in enumerate(games):
         if i >= 50:
             break
 
         try:
-            # Find the closest previous heading for league name
-            heading = game.find_previous_sibling("div", class_="heading")
-            league = heading.text.strip() if heading else "N/A"
-
+            league = game.select_one(".shortTag")
             home = game.select_one(".homeTeam span")
             away = game.select_one(".awayTeam span")
             date_ = game.select_one(".date_bah")
             prob1 = game.select_one(".fprc span:nth-of-type(1)")
             prob2 = game.select_one(".fprc span:nth-of-type(2)")
-            pred_div = game.select_one("div.predict")
+            predict_div = game.select_one("div[class^='predict']")  # Match predict, predict_y, predict_no
 
-            pred = pred_div.get_text(strip=True) if pred_div else "N/A"
-            print(league)
+            # Get prediction value
+            pred = predict_div.get_text(strip=True) if predict_div else "N/A"
 
-            # Determine result based on class
+            # Determine result based on class name
             result = "N/A"
-            if pred_div and "class" in pred_div.attrs:
-                class_list = pred_div["class"]
+            if predict_div and "class" in predict_div.attrs:
+                class_list = predict_div["class"]
                 if "predict_y" in class_list:
                     result = "Won"
                 elif "predict_no" in class_list:
                     result = "Lost"
 
-            score = game.select_one(".ex_sc b")
+       # ✅ Extract final score safely
+            score_div = game.select_one("div.lscr_td")
+            if score_div:
+                score_tag = score_div.select_one("b.l_scr")
+                final_score = score_tag.get_text(strip=True) if score_tag else "N/A"
+            else:
+                final_score = "N/A"
+
+
             avg_points = game.select_one(".avg_sc")
 
-            # Country flag handling
             img_tag = game.select_one('div.shortagDiv.tghov img')
             img_link = img_tag['src'] if img_tag else ""
             img_code = img_link.split('/')[-1].split('.')[0] if img_link else ""
             flag_name = get_country_name_from_code(img_code, country_name)
 
-            # Link and slug
+
             a_tag = game.select_one("a.tnmscn")
+         
             if a_tag and a_tag.has_attr("href"):
                 href = a_tag["href"]
                 path_parts = href.strip("/").split("/")
                 league_slug = path_parts[3] if len(path_parts) > 4 else ""
-                fixtures_link = f"https://www.forebet.com{href}"
+                fixtures_link = f"https://www.forebet.com{href}" if href else ""
+                print(league_slug)
             else:
                 league_slug = ""
                 fixtures_link = ""
 
+             # Find the flag div
+            short_div = game.select_one(".shortagDiv.tghov")
+            league_slug = ""
+            flag_name = ""
+
+            if short_div:
+                img_tag = short_div.select_one("img")
+                if img_tag and img_tag.has_attr("onclick"):
+                    onclick_text = img_tag["onclick"]
+                    # Extract the URL part: 'football-tips-and-predictions-for-paraguay/primera-division'
+                    import re
+                    match = re.search(r"'football-tips-and-predictions-for-[^']*?/([^']+)'", onclick_text)
+                    if match:
+                        league_slug = match.group(1).strip()  # → 'primera-division'
+
+                    # Extract the flag name from img src
+                    img_link = img_tag["src"]
+                    img_code = img_link.split("/")[-1].split(".")[0] if img_link else ""
+                    flag_name = get_country_name_from_code(img_code, country_name)
+
+            # ✅ Optional: also keep .shortTag text if needed
+            league_tag = game.select_one(".shortTag")
+            league_display = league_slug or (league_tag.text.strip() if league_tag else "")
+            print(league_display)
             home = home.text.strip() if home else "N/A"
             away = away.text.strip() if away else "N/A"
 
-            # Parse date and time
+            # ✅ Parse date and time safely
             date_time_str = date_.text.strip() if date_ else "N/A"
             if date_time_str != "N/A":
                 try:
@@ -179,33 +210,32 @@ def scrape_basketball_data():
                     date_only = dt.strftime("%d-%m-%Y")
                     time_only = dt.strftime("%H:%M")
                 except ValueError:
-                    date_only, time_only = "N/A", "N/A"
+                    date_only = "N/A"
+                    time_only = "N/A"
             else:
-                date_only, time_only = "N/A", "N/A"
+                date_only = "N/A"
+                time_only = "N/A"
 
             prob1 = prob1.text.strip() if prob1 else "N/A"
             prob2 = prob2.text.strip() if prob2 else "N/A"
-            score1 = score.text.strip() if score else "N/A"
-            score2 = score.find_next("br").next_sibling.strip() if score else "N/A"
             avg_points = avg_points.text.strip() if avg_points else "N/A"
-
             code = kbt_funtions.get_code(8)
 
             row = [
-                league,
+                league_display,
                 f"{home} vs {away}",
                 pred,
                 "",                     # odd
                 time_only,              # match_time
-                f"{score1} - {score2}",
+                final_score,
                 date_only,
                 f"{flag_name} - {img_code}",
                 result,
                 code,
-                "fb_basketball",
+                "fb_cornerkicks",
                 f"{prob1} - {prob2}",
                 avg_points,
-                f"{score1} - {score2}",
+                final_score,
                 fixtures_link,
                 league_slug,
             ]
@@ -215,7 +245,7 @@ def scrape_basketball_data():
         except Exception as e:
             print("Error parsing game:", e)
 
-        print(f"✅ Returning {len(all_rows)} games.")
+    print(f"✅ Returning {len(all_rows)} games (max 50).")
     return all_rows
 
 
@@ -256,7 +286,7 @@ def post_to_mysql():
             for row in csv_data:
                 if len(row) == 16:
                     cursor.execute(
-                        'INSERT INTO basketball (league, fixtures, tip, odd, match_time, score, date, flag, result, code, source,rate, avg_point,correct_score,fixtures_link, league_slug)'
+                        'INSERT INTO corners (league, fixtures, tip, odd, match_time, score, date, flag, result, code, source,rate, avg_point,correct_score,fixtures_link, league_slug)'
                         'VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
                         row
                     )
@@ -274,7 +304,7 @@ def post_to_mysql():
         print("============Bot deleting previous tips from  database:=============== ")
 
 
-        cursor.execute('DELETE t1 FROM basketball AS t1 INNER JOIN basketball AS t2 WHERE t1.id < t2.id AND t1.fixtures = t2.fixtures AND t1.source = t2.source')
+        cursor.execute('DELETE t1 FROM corners AS t1 INNER JOIN corners AS t2 WHERE t1.id < t2.id AND t1.fixtures = t2.fixtures AND t1.source = t2.source')
 
             
         print(cursor.rowcount," record(s) deleted==============", time.ctime()) 
@@ -299,10 +329,11 @@ def post_to_mysql():
 
 
 def main():
-    rows = scrape_basketball_data()
+    print(p_date)
+    rows = scrape_corners_data(p_date)
     if rows:
         save_to_csv(rows)
-        # post_to_mysql()
+        post_to_mysql()
     else:
         print("No games found or something went wrong.")
 

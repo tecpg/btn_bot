@@ -32,7 +32,7 @@ from datetime import datetime
 date_ = gc.PRESENT_DAY_DATE
 p_date = gc.PRESENT_DAY_DMY
 
-csv_f = gc.BASKETBALL_CSV
+csv_f = gc.TENNIS_CSV
 
 additional_headers = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
@@ -97,7 +97,7 @@ def get_country_name_from_code(img_code, countries):
             return country["name"]
     return ""
 
-def scrape_basketball_data():
+def scrape_tennis_data():
     all_rows = []
 
     with sync_playwright() as p:
@@ -136,19 +136,49 @@ def scrape_basketball_data():
             prob2 = game.select_one(".fprc span:nth-of-type(2)")
             pred_div = game.select_one("div.predict")
 
+         # 🎯 Handle all prediction div variations
+            pred_div = game.select_one("div.predict, div.predict_y, div.predict_no")
+
+            # Get prediction text
             pred = pred_div.get_text(strip=True) if pred_div else "N/A"
-            print(league)
 
             # Determine result based on class
             result = "N/A"
-            if pred_div and "class" in pred_div.attrs:
-                class_list = pred_div["class"]
-                if "predict_y" in class_list:
+            if pred_div and pred_div.has_attr("class"):
+                classes = pred_div["class"]
+                if "predict_y" in classes:
                     result = "Won"
-                elif "predict_no" in class_list:
+                elif "predict_no" in classes:
                     result = "Lost"
 
-            score = game.select_one(".ex_sc b")
+
+            # 🧩 Extract score safely
+            score_div = game.select_one(".ex_sc")
+            if score_div:
+                parts = list(score_div.stripped_strings)
+                if len(parts) == 2:
+                    score_text = f"{parts[0]} - {parts[1]}"
+                elif len(parts) == 1:
+                    score_text = parts[0]
+                else:
+                    score_text = "N/A"
+            else:
+                score_text = "N/A"
+            
+
+            final_score_div = game.select_one("div.lscr_td .fj_column")
+            if final_score_div:
+                spans = final_score_div.find_all("span")
+                if len(spans) >= 2:
+                    home_score = spans[0].get_text(strip=True)
+                    away_score = spans[1].get_text(strip=True)
+                    final_score = f"{home_score} - {away_score}"
+                else:
+                    final_score = "N/A"
+            else:
+                final_score = "N/A"
+
+
             avg_points = game.select_one(".avg_sc")
 
             # Country flag handling
@@ -185,8 +215,6 @@ def scrape_basketball_data():
 
             prob1 = prob1.text.strip() if prob1 else "N/A"
             prob2 = prob2.text.strip() if prob2 else "N/A"
-            score1 = score.text.strip() if score else "N/A"
-            score2 = score.find_next("br").next_sibling.strip() if score else "N/A"
             avg_points = avg_points.text.strip() if avg_points else "N/A"
 
             code = kbt_funtions.get_code(8)
@@ -197,15 +225,15 @@ def scrape_basketball_data():
                 pred,
                 "",                     # odd
                 time_only,              # match_time
-                f"{score1} - {score2}",
+                score_text,
                 date_only,
                 f"{flag_name} - {img_code}",
                 result,
                 code,
-                "fb_basketball",
+                "fb_tennis",
                 f"{prob1} - {prob2}",
                 avg_points,
-                f"{score1} - {score2}",
+                final_score,
                 fixtures_link,
                 league_slug,
             ]
@@ -256,7 +284,7 @@ def post_to_mysql():
             for row in csv_data:
                 if len(row) == 16:
                     cursor.execute(
-                        'INSERT INTO basketball (league, fixtures, tip, odd, match_time, score, date, flag, result, code, source,rate, avg_point,correct_score,fixtures_link, league_slug)'
+                        'INSERT INTO tennis (league, fixtures, tip, odd, match_time, score, date, flag, result, code, source,rate, avg_point,correct_score,fixtures_link, league_slug)'
                         'VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
                         row
                     )
@@ -274,7 +302,7 @@ def post_to_mysql():
         print("============Bot deleting previous tips from  database:=============== ")
 
 
-        cursor.execute('DELETE t1 FROM basketball AS t1 INNER JOIN basketball AS t2 WHERE t1.id < t2.id AND t1.fixtures = t2.fixtures AND t1.source = t2.source')
+        cursor.execute('DELETE t1 FROM tennis AS t1 INNER JOIN tennis AS t2 WHERE t1.id < t2.id AND t1.fixtures = t2.fixtures AND t1.source = t2.source')
 
             
         print(cursor.rowcount," record(s) deleted==============", time.ctime()) 
@@ -299,10 +327,10 @@ def post_to_mysql():
 
 
 def main():
-    rows = scrape_basketball_data()
+    rows = scrape_tennis_data()
     if rows:
         save_to_csv(rows)
-        # post_to_mysql()
+        post_to_mysql()
     else:
         print("No games found or something went wrong.")
 

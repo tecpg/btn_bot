@@ -30,7 +30,7 @@ from datetime import datetime
 
 
 date_ = gc.PRESENT_DAY_DATE
-p_date = gc.PRESENT_DAY_DMY
+p_date = gc.YESTERDAY_DATE
 
 csv_f = gc.BASKETBALL_CSV
 
@@ -97,8 +97,7 @@ def get_country_name_from_code(img_code, countries):
             return country["name"]
     return ""
 
-
-def scrape_basketball_data():
+def scrape_basketball_data(set_date):
     all_rows = []
 
     with sync_playwright() as p:
@@ -112,7 +111,7 @@ def scrape_basketball_data():
         )
 
         page = context.new_page()
-        page.goto("https://www.forebet.com/en/basketball/predictions-today/finished")
+        page.goto(f"https://www.forebet.com/en/basketball/predictions/{set_date}")
         page.wait_for_selector("h1.frontH", timeout=60000)
         html = page.content()
         browser.close()
@@ -121,7 +120,11 @@ def scrape_basketball_data():
     games = soup.select(".rcnt")
     print(f"Found {len(games)} games.")
 
-    for game in games:
+    # ✅ Limit to 50 games
+    for i, game in enumerate(games):
+        if i >= 50:
+            break
+
         try:
             league = game.select_one(".shortTag")
             home = game.select_one(".homeTeam span")
@@ -129,48 +132,62 @@ def scrape_basketball_data():
             date_ = game.select_one(".date_bah")
             prob1 = game.select_one(".fprc span:nth-of-type(1)")
             prob2 = game.select_one(".fprc span:nth-of-type(2)")
-            pred = game.select_one(".predict span")
-            score = game.select_one(".ex_sc b")
+            predict_div = game.select_one("div[class^='predict']")  # Match predict, predict_y, predict_no
+
+            # Get prediction value
+            pred = predict_div.get_text(strip=True) if predict_div else "N/A"
+
+            # Determine result based on class name
+            result = "N/A"
+            if predict_div and "class" in predict_div.attrs:
+                class_list = predict_div["class"]
+                if "predict_y" in class_list:
+                    result = "Won"
+                elif "predict_no" in class_list:
+                    result = "Lost"
+
+            # ✅ Extract score safely
+            score_div = game.select_one("div.lscr_td > div.fj_column")
+            if score_div:
+                spans = score_div.find_all("span")
+                if len(spans) >= 2:
+                    score1 = spans[0].get_text(strip=True)
+                    score2 = spans[1].get_text(strip=True)
+                    final_score = f"{score1} - {score2}"
+                else:
+                    score1 = score2 = "N/A"
+                    final_score = "N/A"
+            else:
+                score1 = score2 = "N/A"
+                final_score = "N/A"
+
             avg_points = game.select_one(".avg_sc")
 
             img_tag = game.select_one('div.shortagDiv.tghov img')
             img_link = img_tag['src'] if img_tag else ""
-
-            if img_link != "":
-                img_code = img_link.split('/')[-1].split('.')[0]
-            else:
-                img_code = ""
-
+            img_code = img_link.split('/')[-1].split('.')[0] if img_link else ""
             flag_name = get_country_name_from_code(img_code, country_name)
 
-
             a_tag = game.select_one("a.tnmscn")
-           
-            
             if a_tag and a_tag.has_attr("href"):
-                href = a_tag["href"]  # Example: /en/basketball/matches/eurobasket-u16-b/hungary-u16-norway-u16/235480
+                href = a_tag["href"]
                 path_parts = href.strip("/").split("/")
+                league_slug = path_parts[3] if len(path_parts) > 4 else ""
+                fixtures_link = f"https://www.forebet.com{href}" if href else ""
+            else:
+                league_slug = ""
+                fixtures_link = ""
 
-                # Ensure we have enough parts for a full path
-                if len(path_parts) > 4:
-                    league_slug = path_parts[3]  # 'eurobasket-u16-b'
-                    fixtures_link = f"https://www.forebet.com{href}"
-                else:
-                    # Less than expected, assign 'N/A' explicitly
-                    league_slug = ""
-                    fixtures_link = ""
-
-            # Clean up
             league = league.text.strip() if league else ""
             home = home.text.strip() if home else "N/A"
             away = away.text.strip() if away else "N/A"
 
-            # Parse date and time
+            # ✅ Parse date and time safely
             date_time_str = date_.text.strip() if date_ else "N/A"
             if date_time_str != "N/A":
                 try:
                     dt = datetime.strptime(date_time_str, "%d/%m/%Y %H:%M")
-                    date_only = dt.strftime("%d/%m/%Y")
+                    date_only = dt.strftime("%d-%m-%Y")
                     time_only = dt.strftime("%H:%M")
                 except ValueError:
                     date_only = "N/A"
@@ -181,9 +198,6 @@ def scrape_basketball_data():
 
             prob1 = prob1.text.strip() if prob1 else "N/A"
             prob2 = prob2.text.strip() if prob2 else "N/A"
-            pred = pred.text.strip() if pred else "N/A"
-            score1 = score.text.strip() if score else "N/A"
-            score2 = score.find_next("br").next_sibling.strip() if score else "N/A"
             avg_points = avg_points.text.strip() if avg_points else "N/A"
             code = kbt_funtions.get_code(8)
 
@@ -192,11 +206,11 @@ def scrape_basketball_data():
                 f"{home} vs {away}",
                 pred,
                 "",                     # odd
-                time_only,                # match_time
-                f"{score1} - {score2}",
+                time_only,              # match_time
+                final_score,
                 date_only,
                 f"{flag_name} - {img_code}",
-                "",                     # result
+                result,
                 code,
                 "fb_basketball",
                 f"{prob1} - {prob2}",
@@ -204,8 +218,6 @@ def scrape_basketball_data():
                 f"{score1} - {score2}",
                 fixtures_link,
                 league_slug,
-                
-
             ]
 
             all_rows.append(row)
@@ -213,6 +225,7 @@ def scrape_basketball_data():
         except Exception as e:
             print("Error parsing game:", e)
 
+    print(f"✅ Returning {len(all_rows)} games (max 50).")
     return all_rows
 
 
@@ -296,7 +309,8 @@ def post_to_mysql():
 
 
 def main():
-    rows = scrape_basketball_data()
+    print(p_date)
+    rows = scrape_basketball_data(p_date)
     if rows:
         save_to_csv(rows)
         post_to_mysql()
