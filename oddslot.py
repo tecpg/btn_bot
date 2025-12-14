@@ -113,7 +113,7 @@ def post_tips():
                 sublist[3] = round(sublist[3] + 0.04, 2)
                 match_list = [str(value) for value in sublist]
                 thewriter.writerow(match_list)
-                # print(match_list)
+                print(match_list)
 
 
 

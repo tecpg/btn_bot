@@ -170,7 +170,7 @@ def scrape_corners_data(set_date):
                 path_parts = href.strip("/").split("/")
                 league_slug = path_parts[3] if len(path_parts) > 4 else ""
                 fixtures_link = f"https://www.forebet.com{href}" if href else ""
-                print(league_slug)
+                # print(league_slug)
             else:
                 league_slug = ""
                 fixtures_link = ""
@@ -198,7 +198,7 @@ def scrape_corners_data(set_date):
             # ✅ Optional: also keep .shortTag text if needed
             league_tag = game.select_one(".shortTag")
             league_display = league_slug or (league_tag.text.strip() if league_tag else "")
-            print(league_display)
+            # print(league_display)
             home = home.text.strip() if home else "N/A"
             away = away.text.strip() if away else "N/A"
 

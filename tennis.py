@@ -243,7 +243,7 @@ def scrape_tennis_data():
         except Exception as e:
             print("Error parsing game:", e)
 
-        print(f"✅ Returning {len(all_rows)} games.")
+        # print(f"✅ Returning {len(all_rows)} games.")
     return all_rows
 
 

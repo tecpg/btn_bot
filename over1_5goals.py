@@ -178,65 +178,77 @@ def get_today_prediction(set_date):
     # Print the collected data
     print(dt)
 
+import traceback
+
+# ---------- POST TO MYSQL ----------
 def connect_server():
-    #NOTE::::::::::::when i experience bad connection: 10458 (28000) in ip i browse my ip address and paste it inside cpanel add host then copy my cpanel sharedhost ip
-    # and paste here as my host ip address
+    connection = None  # important: prevents UnboundLocalError
+
     try:
         connection = kbt_funtions.db_connection()
 
-        if connection.is_connected():
+        if connection and connection.is_connected():
             db_Info = connection.get_server_info()
-            print("Connected to MySQL Server version ", db_Info)
+            print("Connected to MySQL Server version:", db_Info)
+
             cursor = connection.cursor()
-            cursor.execute("select database();")
+            cursor.execute("SELECT DATABASE();")
             record = cursor.fetchone()
+            print("You're connected to database:", record)
+        else:
+            print("❌ Connection failed: connection is None or not connected")
+            return  # stop here, no connection available
 
-            print("You're connected to database: ", record)
-
-        
-            
-        with open(csv_f, "r") as f:
-        
+        # ---- PROCESS CSV ----
+        with open(csv_f, "r", encoding="utf-8") as f:
             csv_data = csv.reader(f)
-            for row in csv_data:
-                print(row)
-                cursor.execute('INSERT INTO soccerpunt(league,fixtures,tip,odd,match_time,score,date,flag,result,code,source)'\
-                    'VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)', row)
-            
+            next(csv_data)  # skip header
 
-            
+            for row in csv_data:
+                if row:
+                    try:
+                        cursor.execute(
+                            '''
+                            INSERT INTO soccerpunt
+                            (league, fixtures, tip, odd, match_time, score, date, flag, result, code, source, protip)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            ''',
+                            row
+                        )
+                    except Exception as insert_err:
+                        print("❌ Insert ERROR on row:", row)
+                        print("Error:", insert_err)
+                        traceback.print_exc()  # <--- FULL ERROR TRACE
+                        continue  # skip bad row
 
         print("Inserting tips now... ", time.ctime())
-        print(cursor.rowcount," record(s) created==============", time.ctime())
 
-        
-        time.sleep(6) 
-        print("==============Bot is taking a nap... whopps!==================== ", time.ctime())  
-        print("============Bot deleting previous tips from  database:=============== ")
-
-
-        cursor.execute('DELETE t1 FROM soccerpunt AS t1 INNER JOIN soccerpunt AS t2 WHERE t1.id < t2.id AND t1.fixtures = t2.fixtures AND t1.tip = t2.tip AND t1.source = t2.source')
-
-            
-        print(cursor.rowcount," record(s) deleted==============", time.ctime()) 
-
-    
+        # DELETE DUPLICATES
+        cursor.execute('''
+            DELETE t1 FROM soccerpunt AS t1
+            INNER JOIN soccerpunt AS t2
+            ON t1.fixtures = t2.fixtures
+            AND t1.source = t2.source
+            AND t1.id < t2.id
+        ''')
+        print("Duplicate cleanup done", time.ctime())
 
     except mysql.connector.Error as err:
-        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-            print("Something is wrong with your user name or password ", err)
-        elif err.errno == errorcode.ER_BAD_DB_ERROR:
-            print("Database does not exist")
-        else:
-            print("Error while connecting to MySQL", err)
+        print("❌ MySQL ERROR:", err)
+        traceback.print_exc()  # <--- SHOW EXACT LINE OF FAILURE
+
+    except Exception as e:
+        print("❌ General ERROR:", e)
+        traceback.print_exc()  # <--- SHOW EXACT LINE OF FAILURE
 
     finally:
         if connection and connection.is_connected():
             cursor.close()
             connection.commit()
             connection.close()
-                
             print("MySQL connection is closed")
+        else:
+            print("⚠️ No active connection to close")
 
 
 

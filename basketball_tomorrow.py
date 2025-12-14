@@ -30,7 +30,7 @@ from datetime import datetime
 
 
 date_ = gc.PRESENT_DAY_DATE
-p_date = gc.PRESENT_DAY_DMY
+tomorrow_date = gc.TOMORROW_YMD
 
 csv_f = gc.BASKETBALL_CSV
 
@@ -111,7 +111,7 @@ def scrape_basketball_data():
         )
 
         page = context.new_page()
-        page.goto("https://www.forebet.com/en/basketball/predictions/2025-12-10")
+        page.goto(f"https://www.forebet.com/en/basketball/predictions/{tomorrow_date}")
         page.wait_for_selector("h1.frontH", timeout=60000)
         html = page.content()
         browser.close()

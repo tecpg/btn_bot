@@ -53,6 +53,7 @@ YESTERDAY_DATE = PRESENT_DAY_DATE - timedelta(days = 1)
 YESTERDAY_DMY = YESTERDAY_DATE.strftime('%d-%m-%Y')
 PRESENT_DAY_DMY = date.today().strftime('%d-%m-%Y')
 PRESENT_DAY_YMD = date.today().strftime('%Y-%m-%d')
+TOMORROW_YMD = (date.today() + timedelta(days=1)).strftime('%Y-%m-%d')
 
 
 
@@ -113,6 +114,8 @@ SAFE_BET_DC_CSV = "csv_files/safe_dc.csv"
 SAFE_BET_OVERGOALS_CSV = "csv_files/safe_bet_overgoals.csv"
 TENNIS_CSV = "csv_files/tennis.csv"
 TIPSBET_CSV = "csv_files/tipsbet_data.csv"
+PRIMA_CSV = "csv_files/prima.csv"
+PRIMA_LOW_CSV = "csv_files/primalow.csv"
 
 
 #telegram const

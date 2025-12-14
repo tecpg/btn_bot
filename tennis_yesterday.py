@@ -236,7 +236,7 @@ def scrape_basketball_data(set_date):
         except Exception as e:
             print("Error parsing game:", e)
 
-    print(f"✅ Returning {len(all_rows)} games (max 50).")
+    # print(f"✅ Returning {len(all_rows)} games (max 50).")
     return all_rows
 
 
