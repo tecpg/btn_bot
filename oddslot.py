@@ -25,7 +25,8 @@ from consts import global_consts as gc
 
 
 date_ = gc.PRESENT_DAY_DATE
-p_date = gc.PRESENT_DAY_DMY
+p_date = gc.PRESENT_DAY_YMD
+
 
 
 
@@ -70,6 +71,7 @@ def post_tips():
                 source = "vip_tips"
                 flag = ""
                 match_date = p_date
+                _date = p_date
                 match_code = kbt_funtions.get_code(8)
 
                 prediction = [
@@ -80,6 +82,7 @@ def post_tips():
                     timez,
                     score,
                     match_date,
+                    _date,
                     flag,
                     results,
                     match_code,
@@ -142,8 +145,8 @@ def post_to_mysql():
             for row in csv_data:
                 if len(row) == 12:
                     cursor.execute(
-                        'INSERT INTO soccerpunt(league, fixtures, tip, odd, match_time, score, date, flag, result, code, source, protip)'
-                        'VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
+                        'INSERT INTO soccerpunt(league, fixtures, tip, odd, match_time, score, date, match_date flag, result, code, source, protip)'
+                        'VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
                         row
                     )
                 else:

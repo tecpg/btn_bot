@@ -49,10 +49,14 @@ Your feedback is always valuable to us. Thank you!</p> """
 MYSQL_DATE = date.today().strftime('%Y-%m-%d')
 
 PRESENT_DAY_DATE = date.today()
-YESTERDAY_DATE = PRESENT_DAY_DATE - timedelta(days = 1)
-YESTERDAY_DMY = YESTERDAY_DATE.strftime('%d-%m-%Y')
 PRESENT_DAY_DMY = date.today().strftime('%d-%m-%Y')
 PRESENT_DAY_YMD = date.today().strftime('%Y-%m-%d')
+
+YESTERDAY_DATE = PRESENT_DAY_DATE - timedelta(days=1)
+YESTERDAY_YMD = YESTERDAY_DATE.strftime('%Y-%m-%d')  # Correct format for MySQL
+YESTERDAY_DMY = YESTERDAY_DATE.strftime('%d-%m-%Y')  # Correct format for MySQL
+
+
 TOMORROW_YMD = (date.today() + timedelta(days=1)).strftime('%Y-%m-%d')
 
 
