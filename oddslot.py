@@ -24,8 +24,8 @@ import kbt_funtions
 from consts import global_consts as gc
 
 
-date_ = gc.PRESENT_DAY_DATE
-p_date = gc.PRESENT_DAY_YMD
+date_ = gc.PRESENT_DAY_YMD
+p_date =  gc.PRESENT_DAY_YMD
 
 
 
@@ -108,10 +108,10 @@ def post_tips():
         for sublist in selected_list:
             if kbt_funtions.check_odd_range(sublist[3]):
                 if free_assigned <= 2:
-                    sublist[11] = 'free'
+                    sublist[12] = 'free'
                     free_assigned += 1
                 else:
-                    sublist[11] = 'premium'
+                    sublist[12] = 'premium'
 
                 sublist[3] = round(sublist[3] + 0.04, 2)
                 match_list = [str(value) for value in sublist]
@@ -143,9 +143,9 @@ def post_to_mysql():
         
             csv_data = csv.reader(f)
             for row in csv_data:
-                if len(row) == 12:
+                if len(row) == 13:
                     cursor.execute(
-                        'INSERT INTO soccerpunt(league, fixtures, tip, odd, match_time, score, date, match_date flag, result, code, source, protip)'
+                        'INSERT INTO soccerpunt(league, fixtures, tip, odd, match_time, score, date, match_date, flag, result, code, source, protip)'
                         'VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
                         row
                     )

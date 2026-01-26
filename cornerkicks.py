@@ -121,7 +121,7 @@ def scrape_corners_data():
     print(f"Found {len(games)} games.")
 
     for i, game in enumerate(games):
-        if i >= 50:  # ✅ Limit to first 50 games
+        if i >= 20:  # ✅ Limit to first 50 games
             break
 
         try:

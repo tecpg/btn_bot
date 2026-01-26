@@ -122,7 +122,7 @@ def scrape_corners_data(set_date):
 
     # ✅ Limit to 50 games
     for i, game in enumerate(games):
-        if i >= 50:
+        if i >= 20:
             break
 
         try:
