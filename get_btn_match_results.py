@@ -5,7 +5,7 @@ import mysql.connector
 from mysql.connector import errorcode
 
 # Date to fetch
-date_  = gc.YESTERDAY_DMY 
+date_  = gc.YESTERDAY_YMD 
 
 csv_file = "btn_match_results.csv"  # Output CSV
 
@@ -31,9 +31,9 @@ def fetch_matches_by_date(date):
 
             # Select matches for the given date
             query = """
-                SELECT id, league, fixtures, tip, odd, match_time, score, date, flag, result, code, source, protip
+                SELECT id, league, fixtures, tip, odd, match_time, score, date, match_date, flag, result, code, source, protip
                 FROM soccerpunt
-                WHERE date = %s
+                WHERE match_date = %s
                 ORDER BY id ASC
             """
             cursor.execute(query, (date,))

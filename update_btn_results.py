@@ -6,32 +6,39 @@ import kbt_funtions
 
 def determine_result(tip, home_score, away_score):
     """Determine Won/Lost based on Tip and API score"""
+
     try:
         home_score = int(home_score)
         away_score = int(away_score)
-    except ValueError:
+    except (ValueError, TypeError):
         return "Not Yet"
 
     tip = tip.upper().strip()
+
+    # Double Chance
     if tip == "HOME DC":
         return "Won" if home_score >= away_score else "Lost"
+
     elif tip == "AWAY DC":
         return "Won" if away_score >= home_score else "Lost"
-    elif tip == "HOME":
-        return "Won" if home_score > away_score else "Lost"
-    elif tip == "AWAY":
-        return "Won" if away_score > home_score else "Lost"
+
+    # HOME WIN (draw counts as win)
+    elif tip in ("HOME", "HOME WIN"):
+        return "Won" if home_score >= away_score else "Lost"
+
+    # AWAY WIN (draw counts as win)
+    elif tip in ("AWAY", "AWAY WIN"):
+        return "Won" if away_score >= home_score else "Lost"
+
     else:
         return "Not Yet"
 
 # -----------------------------
 # Utility functions for matching
 # -----------------------------
-import re
 
 import re
-
-import re
+import unicodedata
 
 import re
 import unicodedata
@@ -41,21 +48,30 @@ def normalize_team(name):
     Normalize team names for matching:
     - lowercase
     - remove accents (é -> e)
-    - replace punctuation with spaces
+    - remove all non-letter characters (' - _ ` etc)
     - remove minor words like B, II, AD, FC, SC, CF, CLUB, RJ, RS
     - only keep words longer than 2 letters
     """
+
     # lowercase
     name = name.lower()
+
     # remove accents
     name = unicodedata.normalize('NFD', name)
     name = ''.join(c for c in name if unicodedata.category(c) != 'Mn')
-    # replace punctuation with space
-    name = re.sub(r'[^\w\s]', ' ', name)
+
+    # keep ONLY letters and spaces
+    name = re.sub(r'[^a-z\s]', ' ', name)
+
     # remove minor words
     name = re.sub(r'\b(b|ii|ad|fc|sc|cf|club|rs|rj)\b', '', name)
+
+    # normalize spaces
+    name = re.sub(r'\s+', ' ', name).strip()
+
     # split into words and keep words longer than 2 letters
     words = set(w for w in name.split() if len(w) > 2)
+
     return words
 
 def partial_match(db_home, db_away, api_home, api_away):
