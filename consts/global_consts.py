@@ -109,6 +109,8 @@ MY_HEARDER = headers.update(additional_headers)
 #cvs file names
 
 
+VIP_CSV_2 = "csv_files/vip_tips_2_data.csv"
+
 VIP_CSV = "csv_files/vip_tips_data.csv"
 BASKETBALL_CSV = "csv_files/basketball.csv"
 CORNERS_CSV = "csv_files/corners.csv"
@@ -120,14 +122,16 @@ TENNIS_CSV = "csv_files/tennis.csv"
 TIPSBET_CSV = "csv_files/tipsbet_data.csv"
 PRIMA_CSV = "csv_files/prima.csv"
 PRIMA_LOW_CSV = "csv_files/primalow.csv"
+TELEGRAM_BOT_CSV = "csv_files/telegram_bot.csv"
+TELEGRAM_VIP_BOT_CSV = "csv_files/telegram_vip_bot.csv"
 
 
 #telegram const
 # Replace 'YOUR_BOT_TOKEN' with your actual bot token
-BOT_TOKEN = '6151016586:AAHnkIqKqBO01v1fQfd8noSOCzKLHjrWyGw'
+BOT_TOKEN = '8354479577:AAEi70wELm3jlqKXCBLl8yFHrvzcwVIOpfs'
 
 # Replace 'CHANNEL_CHAT_ID' with the actual chat ID of your channel
-CHANNEL_CHAT_ID = '-1001701327610'
+CHANNEL_CHAT_ID = '-1003725670883'
 
 # URL for the Telegram Bot API
 # BASE_URL = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
@@ -135,6 +139,9 @@ CHANNEL_CHAT_ID = '-1001701327610'
 # URL for the Telegram Bot API
 TELEGRAM_BASE_URL = f"https://api.telegram.org/bot{BOT_TOKEN}/"
 
+CHANNEL_CHAT_VIP_ID = '-1003755496745'
+VIP_BOT_TOKEN = '8480050118:AAGUx0SxZ-QQ8Y2cdE4LRDzwyjvLVCkWIvg'
+TELEGRAM_VIP_BASE_URL = f"https://api.telegram.org/bot{VIP_BOT_TOKEN}/"
 
 
 COUNTRIES = [

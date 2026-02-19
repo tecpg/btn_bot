@@ -1,36 +1,74 @@
-League,Fixture,Tip,Score,Code,Result
-Spain: Laliga2,Ceuta vs Cultural Leonesa,HOME DC,3-1,tlzpybnw177409123,Won
-Saudi Arabia: Saudi Professional League,Al Hazem vs Damac,HOME DC,Not Yet,jgdmrezg69490641,Not Yet
-Saudi Arabia: Division 1,Al Jubail vs Al Zulfi,AWAY DC,2-2,qtphzggy104072741,Won
-England: Premier League 2,Blackburn U21 vs Birmingham U21,HOME DC,5-0,aobxovhf273036847,Won
-Israel: Leumit League,H. Raanana vs Hapoel Kfar Saba,AWAY DC,1-1,byslvigh134929236,Won
-Turkey: 1. Lig,Sakaryaspor vs Bodrumspor,AWAY DC,0-2,txuljisv136834000,Won
-Italy: Serie C - Group A,Lecco vs Inter U23,HOME DC,0-2,ikantozi126867867,Lost
-England: Premier League 2,Manchester Utd U21 vs Brighton U21,HOME DC,1-1,qaitvdrc63820829,Won
-Portugal: Liga Revelacao U23 - Championship Group,Torreense U23 vs Leixoes U23,HOME DC,0-2,cupkgdix198737735,Lost
-Saudi Arabia: Division 1,Al Batin vs Al Raed,AWAY WIN,Not Yet,axzsbmft222551178,Not Yet
-England: Premier League 2,Southampton U21 vs West Brom U21,HOME WIN,2-0,rhydogli183906136,Won
-Turkey: Super Lig,Eyupspor vs Besiktas,AWAY WIN,2-2,libdlsdp72706779,Won
-Indonesia: Super League,Dewa United vs Arema FC,HOME WIN,2-0,vyyyftjh265516353,Won
-England: Premier League 2,Nottingham U21 vs Reading U21,HOME WIN,0-1,jxiknqie121886008,Lost
-Mexico: Liga Mx Women - Clausura,Queretaro W vs Toluca W,AWAY WIN,1-4,epvjropu176730137,Won
-Saudi Arabia: Saudi Professional League,Al Ittihad vs Al Okhdood,HOME WIN,2-1,uvpfrknd169907025,Won
-Brazil: Cearense - Championship Group,Fortaleza vs Floresta EC,HOME WIN,1-0,tqexelty40037218,Won
-England: Premier League 2,Crystal Palace U21 vs Derby U21,HOME WIN,6-0,tgbgufch9083477,Won
-Israel: Leumit League,Maccabi Petah Tikva vs Hapoel Hadera,HOME WIN,2-0,mzdksxyd317032462,Won
-Portugal: Liga Portugal,FC Porto vs Gil Vicente,HOME WIN,3-0,vgdrpfqj191343252,Won
-Portugal: Campeonato De Portugal - Group D,Louletano vs Lagoa,HOME WIN,Not Yet,xacwgfob308176934,Not Yet
-Saudi Arabia: Saudi Professional League,Al Nassr vs Al Taawon,HOME WIN,1-0,ctsvjifi153842968,Won
-England: Isthmian League Premier Division,Potters Bar vs Hashtag,AWAY DC,2-1,hkarqiru88451783,Lost
-Saudi Arabia: Division 1,Al Arabi vs Al-Faisaly,AWAY DC,0-3,jvsumets217632038,Won
-England: Premier League 2,Blackburn U21 vs Birmingham U21,HOME DC,5-0,wkcbfxhm33420310,Won
-England: Premier League 2,Leicester U21 vs Chelsea U21,AWAY DC,1-2,cmohqdss112585383,Won
-England: National League South,Chelmsford vs Tonbridge,HOME DC,1-0,nhhszmma171979115,Won
-Brazil: Paulista,Portuguesa vs Guarani,HOME DC,0-1,mizfogpg304057227,Lost
-Israel: Leumit League,H. Raanana vs Hapoel Kfar Saba,AWAY DC,1-1,lpvzpeqt163016650,Won
-Turkey: 1. Lig,Sakaryaspor vs Bodrumspor,AWAY DC,0-2,mygejovu82132138,Won
-England: National League,Rochdale vs Southend,HOME DC,Not Yet,brnlweoy225149434,Not Yet
-England: National League South,Chesham vs Hornchurch,AWAY DC,Not Yet,hdiynmeb52698188,Not Yet
-England: National League North,South Shields vs AFC Fylde,HOME DC,Not Yet,ezgotkvz305764795,Not Yet
-England: Isthmian League Premier Division,Billericay vs St. Albans,HOME DC,Not Yet,blwqpgaf205648827,Not Yet
-England: National League North,Peterborough Sports vs Macclesfield,AWAY DC,Not Yet,zpzoyynu106938646,Not Yet
+ID,League,Fixture,Tip,Score,Match Date,Result,Code
+144705,Azerbaijan: I Liqa,MOIK Baku vs Sabail,AWAY DC,Not Yet,2026-02-18,Not Yet,hltarmlu38389810
+144707,Asia: Afc Champions League 2 - Play Offs,Al Ahli Doha vs Sepahan,AWAY DC,Not Yet,2026-02-18,Not Yet,sivzhlnj299022572
+144710,Spain: Laliga,Levante vs Villarreal,AWAY DC,0-1,2026-02-18,Won,qnmpxvzz213566773
+144712,Europe: Champions League - Play Offs,Club Brugge KV vs Atl. Madrid,AWAY DC,3-3,2026-02-18,Won,lajuqqme99778668
+144713,Brazil: Copa Betano Do Brasil,Araguaina vs Primavera,AWAY DC,0-3,2026-02-18,Won,leyayhby1115226
+144715,Thailand: Thai League 2,Sisaket United vs Nong Bua Pitchaya,HOME DC,2-1,2026-02-18,Won,zpbkhlrl68114862
+144716,Thailand: Thai League 2,Pattaya United vs Nakhon Pathom,HOME DC,1-1,2026-02-18,Won,jpzgidom43866934
+144717,Europe: Uefa Europa Cup Women,Austria Vienna W vs Sparta Prague W,HOME DC,Not Yet,2026-02-18,Not Yet,iunswmti46467758
+144718,South America: Copa Libertadores - Qualification,O'Higgins vs Bahia,AWAY DC,1-0,2026-02-18,Lost,nzyapdjn158880915
+144719,England: League Two,Grimsby vs Walsall,HOME DC,2-2,2026-02-18,Won,agmcpvgn265958303
+144720,Argentina: Reserve League - Apertura,Belgrano 2 vs Huracan 2,HOME DC,0-2,2026-02-18,Lost,wcakqzwp130393024
+144721,Scotland: Scottish Cup,Aberdeen vs Motherwell,AWAY DC,2-0,2026-02-18,Lost,vanxdziw38352700
+144722,Spain: Laliga,Levante vs Villarreal,AWAY DC,0-1,2026-02-18,Won,koidbpnx50013944
+144723,Brazil: Paraibano,Confianca PB vs Pombal,AWAY DC,3-2,2026-02-18,Lost,ajvamtoj108236992
+144724,England: League Two,Grimsby vs Walsall,HOME DC,2-2,2026-02-18,Won,tnlgkmfv319844233
+144725,Europe: Champions League - Play Offs,Club Brugge KV vs Atl. Madrid,AWAY DC,3-3,2026-02-18,Won,yhgtlvmw47459689
+144726,Argentina: Reserve League - Apertura,Belgrano 2 vs Huracan 2,HOME DC,0-2,2026-02-18,Lost,qwlxkqwr121638556
+144727,Europe: Uefa Europa Cup Women,Austria Vienna W vs Sparta Prague W,HOME DC,?:?,2026-02-18,?,ayghgbcj127322493
+144728,Azerbaijan: I Liqa,MOIK Baku vs Sabail,AWAY DC,?:?,2026-02-18,?,fdmoahkg53512710
+144729,Thailand: Thai League 2,Sisaket United vs Nong Bua Pitchaya,HOME DC,2-1,2026-02-18,Won,mfbqnewh183094947
+144730,South America: Copa Libertadores - Qualification,O'Higgins vs Bahia,AWAY DC,1-0,2026-02-18,Lost,fetscerj116384811
+144731,Thailand: Thai League 2,Pattaya United vs Nakhon Pathom,HOME DC,1-1,2026-02-18,Won,iahvaolc311518604
+144732,Asia: Afc Champions League 2 - Play Offs,Al Ahli Doha vs Sepahan,AWAY DC,?:?,2026-02-18,?,oagvmotk177348736
+144733,England: National League South,Farnborough vs Dag and Red,AWAY DC,?:?,2026-02-18,?,mvbnaoqs271879301
+144734,Scotland: Scottish Cup,Aberdeen vs Motherwell,AWAY DC,2-0,2026-02-18,Lost,bqnlckfu303621583
+144735,AFC Champions League,Melbourne City vs Gangwon,12,0-0,2026-02-18,Lost,hcadxmcj279787779
+144736,Kenya - Premier League,Nairobi United vs Mara Sugar,1X,,2026-02-18,?,ufainnnq317081050
+144737,Turkiye - TFF First League,Vanspor vs Bodrum,12,,2026-02-18,?,asfnljvg79077923
+144738,Slovakia - Slovak Cup,Tatran LM vs Komarno,12,,2026-02-18,?,ctvmnxbk196441500
+144739,Morocco - Botola,RCA Zemamra vs Berkane,X2,1-2,2026-02-18,Won,okgicnuk261617942
+144740,South Africa - PSL,Siwelele vs Kaizer Chiefs,X2,- - -,2026-02-18,?,aiyaaees16816881
+144741,AFC Champions League Two,Al-Ahli Doha vs Sepahan,X2,,2026-02-18,?,klvtlanp213523677
+144742,England - League Two,Grimsby Town vs Walsall,12,2-2,2026-02-18,Lost,tceqyvrd136684372
+144743,Scotland - Scottish Cup,Aberdeen vs Motherwell,X2,2-0,2026-02-18,Lost,xrnzyvxk137522157
+144744,Nicaragua - Liga Primera,ART Mun. Jalapa vs Rancho Santana,1X,2-0,2026-02-18,Won,kumphokp83499734
+144745,Copa Libertadores,O'Higgins vs Bahia BA,X2,1-0,2026-02-18,Lost,zquliupy274846986
+144746,Brazil - Brazil,CRB AL vs CSA AL,1X,2-0,2026-02-18,Won,eswgrgfp149822411
+144747,Nicaragua - Liga Primera,Walter Ferretti vs Matagalpa,1X,0-3,2026-02-18,Lost,wzdfqgdq36870779
+144748,Argentina - Copa Argentina,River Plate vs Ciudad Bolivar,1,1-0,2026-02-18,Won,onmdfdvn137524820
+144749,AFC Champions League,Melbourne City vs Gangwon,12,0-0,2026-02-18,Lost,wdxzeqlk45835991
+144750,Turkiye - TFF First League,Serik vs Corum,2,,2026-02-18,?,nfvubnrh310055561
+144751,Kenya - Premier League,Nairobi United vs Mara Sugar,1X,,2026-02-18,?,gghsjcfk227177513
+144752,AFC Champions League Two,Persib Bandung vs Ratchaburi,1,1-0,2026-02-18,Won,hmljmelc139407153
+144753,Turkiye - TFF First League,Vanspor vs Bodrum,12,,2026-02-18,?,ubpchler202218876
+144754,Slovakia - Slovak Cup,Tatran LM vs Komarno,12,,2026-02-18,?,exrkhqbs320853434
+144755,Morocco - Botola,RCA Zemamra vs Berkane,X2,1-2,2026-02-18,Won,lerzomlm113264087
+144756,Turkiye - TFF First League,Manisa vs Bandirmaspor,1X,,2026-02-18,?,tlqjrhic25980507
+144757,Malta - Premier,Hibernians vs Hamrun Spartans,2,0-1,2026-02-18,Won,qxaigwvn70808592
+144758,South Africa - PSL,Orlando Pirates vs Mamelodi Sund.,1X,1-2,2026-02-18,Lost,vmfmbrtv294250705
+144759,South Africa - PSL,Siwelele vs Kaizer Chiefs,X2,- - -,2026-02-18,?,reydsoot200149306
+144760,Champions League,Qarabag vs Newcastle Utd,2,1-6,2026-02-18,Won,wtvswdsi146988570
+144761,AFC Champions League Two,Al-Ahli Doha vs Sepahan,X2,,2026-02-18,?,jxgxxjbv81423007
+144762,Italy - Serie C - gr. C,Catania vs Trapani,1,4-0,2026-02-18,Won,vabhqccw221168583
+144763,England - League Two,Grimsby Town vs Walsall,12,2-2,2026-02-18,Lost,suylqotu267961149
+144764,Italy - Serie A,Milan vs Como,1X,1-1,2026-02-18,Won,yevdqevf211072576
+144765,Scotland - Scottish Cup,Aberdeen vs Motherwell,X2,2-0,2026-02-18,Lost,mukujgjn167142908
+144766,England - Premier League,Wolverhampton vs Arsenal,2,,2026-02-18,?,fncophlh89040015
+144767,Malta - Premier,Mosta vs Tarxien Rainbows,1X,0-1,2026-02-18,Lost,hlzxdywl292084167
+144768,Nicaragua - Liga Primera,ART Mun. Jalapa vs Rancho Santana,1X,2-0,2026-02-18,Won,kcwxcpkp278596352
+144769,Copa Libertadores,O'Higgins vs Bahia BA,X2,1-0,2026-02-18,Lost,zvlajgrx182700371
+144770,El Salvador - Primera,Hercules Salvador vs Cacahuatique,X2,1-3,2026-02-18,Won,cawspkan21052501
+144771,Brazil - Brazil,CRB AL vs CSA AL,1X,2-0,2026-02-18,Won,hwbfqnos24176232
+144772,Nicaragua - Liga Primera,Walter Ferretti vs Matagalpa,1X,0-3,2026-02-18,Lost,xwfhycry83918506
+144773,AFC. CL,Shanghai Port FC vs Ulsan Hyundai,Over 1.5,0-0,2026-02-18,Lost,oevrknyj169565057
+144774,TURK D2,Serik Belediyespor vs Corum FK,Over 1.5,?:?,2026-02-18,?,jpgkwdkh107732560
+144775,UCL,Qarabag FK vs Newcastle United,Over 1.5,1-6,2026-02-18,Won,wmkiwkvp221889377
+144776,UCL W,Real Madrid W vs Paris FC W,Over 1.5,2-0,2026-02-18,Won,dwqowbzn160491356
+144777,SWT D1,FC Winterthur vs St Gallen,Over 1.5,1-5,2026-02-18,Won,cgkgturh165226693
+144778,La Liga,Levante UD vs Villarreal,Over 1.5,0-1,2026-02-18,Lost,alhmrwpr268697985
+144779,UCL,Club Brugge vs Atletico Madrid,Over 1.5,3-3,2026-02-18,Won,ssndjkcg281447095
+144780,UCL,Bodo Glimt vs Inter Milan,Over 1.5,3-1,2026-02-18,Won,icfthmcr115738142
+144781,EPL,Wolves vs Arsenal,Over 1.5,2-2,2026-02-18,Won,dzvtftey90224627
+144782,Brazil: Copa Betano Do Brasil,Ivinhema vs Independente AP,HOME DC,1-0,2026-02-18,Won,wksihgln47875458

@@ -3,6 +3,10 @@ import string
 import kbt_load_env
 import mysql.connector
 from mysql.connector import errorcode
+import mysql.connector
+from mysql.connector import pooling
+from consts import global_consts as gc
+
 
 def db_connection():
      #open db connection
@@ -16,6 +20,9 @@ def db_connection():
         #                                  user='root',
         #                                  password='')
   
+
+
+
 
 def get_code(length):
     letters = string.ascii_lowercase
@@ -88,11 +95,12 @@ def get_result_by_score(pick, score):
         print(e)
         return "..."
 
-
 def check_odd_range(value):
-    return 1.80 <= value <= 4.0
-
-
+    try:
+        value = float(value)
+        return 1.80 <= value <= 4.00
+    except:
+        return False
 
 # Function to get a random string from the list
 

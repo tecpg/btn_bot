@@ -184,8 +184,12 @@ def post_to_mysql():
             print("MySQL connection is closed")
 
 
-# ---------- MAIN EXECUTION ----------
-if __name__ == "__main__":
+
+def run():
     today_matches = scrape_tipsomatic(limit=25)
     save_to_csv(today_matches, csv_f)
     post_to_mysql()
+
+
+if __name__ == "__main__":
+     run()

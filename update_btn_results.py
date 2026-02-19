@@ -1,219 +1,177 @@
 import csv
-import time
 import mysql.connector
 from mysql.connector import errorcode
 import kbt_funtions
+import re
+import unicodedata
 
+
+# =========================
+# Determine bet result
+# =========================
 def determine_result(tip, home_score, away_score):
-    """Determine Won/Lost based on Tip and API score"""
-
     try:
         home_score = int(home_score)
         away_score = int(away_score)
     except (ValueError, TypeError):
-        return "Not Yet"
+        return "?:?"
 
-    tip = tip.upper().strip()
+    tip = tip.upper().replace(" ", "").strip()
+    total_goals = home_score + away_score
 
-    # Double Chance
-    if tip == "HOME DC":
+    if tip in ("HOMEDC", "HOME"):
         return "Won" if home_score >= away_score else "Lost"
 
-    elif tip == "AWAY DC":
+    if tip in ("AWAYDC", "AWAY"):
         return "Won" if away_score >= home_score else "Lost"
 
-    # HOME WIN (draw counts as win)
-    elif tip in ("HOME", "HOME WIN"):
+    if tip == "1":
+        return "Won" if home_score > away_score else "Lost"
+
+    if tip == "X":
+        return "Won" if home_score == away_score else "Lost"
+
+    if tip == "2":
+        return "Won" if away_score > home_score else "Lost"
+
+    if tip == "1X":
         return "Won" if home_score >= away_score else "Lost"
 
-    # AWAY WIN (draw counts as win)
-    elif tip in ("AWAY", "AWAY WIN"):
+    if tip in ("X2", "2X"):
         return "Won" if away_score >= home_score else "Lost"
 
-    else:
-        return "Not Yet"
+    if tip == "12":
+        return "Won" if home_score != away_score else "Lost"
 
-# -----------------------------
-# Utility functions for matching
-# -----------------------------
+    if tip in ("OVER1.5", "O1.5"):
+        return "Won" if total_goals >= 2 else "Lost"
 
-import re
-import unicodedata
+    return "?:?"
 
-import re
-import unicodedata
 
+# =========================
+# Team normalization
+# =========================
 def normalize_team(name):
-    """
-    Normalize team names for matching:
-    - lowercase
-    - remove accents (é -> e)
-    - remove all non-letter characters (' - _ ` etc)
-    - remove minor words like B, II, AD, FC, SC, CF, CLUB, RJ, RS
-    - only keep words longer than 2 letters
-    """
-
-    # lowercase
     name = name.lower()
+    name = unicodedata.normalize("NFD", name)
+    name = "".join(c for c in name if unicodedata.category(c) != "Mn")
+    name = re.sub(r"[-']", " ", name)
+    name = re.sub(r"[^a-z\s]", " ", name)
+    name = re.sub(r"\b(b|ii|ad|fc|sc|united|cf|club|rs|rj|dubai)\b", "", name)
+    name = re.sub(r"\s+", " ", name).strip()
+    return set(w for w in name.split() if len(w) > 2)
 
-    # remove accents
-    name = unicodedata.normalize('NFD', name)
-    name = ''.join(c for c in name if unicodedata.category(c) != 'Mn')
-
-    # keep ONLY letters and spaces
-    name = re.sub(r'[^a-z\s]', ' ', name)
-
-    # remove minor words
-    name = re.sub(r'\b(b|ii|ad|fc|sc|cf|club|rs|rj)\b', '', name)
-
-    # normalize spaces
-    name = re.sub(r'\s+', ' ', name).strip()
-
-    # split into words and keep words longer than 2 letters
-    words = set(w for w in name.split() if len(w) > 2)
-
-    return words
 
 def partial_match(db_home, db_away, api_home, api_away):
-    """
-    Return True if DB fixture matches API fixture based on normalized word overlap
-    Checks both home-home/away-away and home-away/away-home
-    """
-    db_home_words = normalize_team(db_home)
-    db_away_words = normalize_team(db_away)
-    api_home_words = normalize_team(api_home)
-    api_away_words = normalize_team(api_away)
+    return (
+        normalize_team(db_home) & normalize_team(api_home)
+        and normalize_team(db_away) & normalize_team(api_away)
+    ) or (
+        normalize_team(db_home) & normalize_team(api_away)
+        and normalize_team(db_away) & normalize_team(api_home)
+    )
 
-    # home-home & away-away
-    match1 = bool(db_home_words & api_home_words) and bool(db_away_words & api_away_words)
-    # home-away & away-home
-    match2 = bool(db_home_words & api_away_words) and bool(db_away_words & api_home_words)
 
-    return match1 or match2
+# =========================
+# CSV Processing
+# =========================
+def process_csvs(db_csv, api_csv, output_csv):
+    api_fixtures = []
+    with open(api_csv, encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            api_fixtures.append({
+                "home": row["Home Team"].lower(),
+                "away": row["Away Team"].lower(),
+                "home_score": row["Home Score"],
+                "away_score": row["Away Score"],
+                "score": f"{row['Home Score']}-{row['Away Score']}"
+            })
 
-# -----------------------------
-# File paths
-# -----------------------------
-db_csv_file = "btn_match_results.csv"
-api_csv_file = "api_match_results.csv"
-output_csv_file = "btn_match_results_updated.csv"
+    with open(db_csv, encoding="utf-8") as f:
+        db_matches = list(csv.DictReader(f))
 
-# Step 1: Read API CSV
-api_fixtures = []
-with open(api_csv_file, mode="r", encoding="utf-8") as f:
-    reader = csv.DictReader(f)
-    for row in reader:
-        api_fixtures.append({
-            "league": row["League"].strip().lower(),
-            "home": row["Home Team"].strip().lower(),
-            "away": row["Away Team"].strip().lower(),
-            "home_score": row["Home Score"],
-            "away_score": row["Away Score"],
-            "score": f"{row['Home Score']}-{row['Away Score']}"
-        })
+    updated = 0
+    for match in db_matches:
+        if " vs " not in match["Fixture"]:
+            continue
 
-print(f"Loaded {len(api_fixtures)} API fixtures")
+        db_home, db_away = map(str.strip, match["Fixture"].split(" vs "))
 
-# Step 2: Read DB CSV
-db_matches = []
-with open(db_csv_file, mode="r", encoding="utf-8") as f:
-    reader = csv.DictReader(f)
-    for row in reader:
-        db_matches.append(row)
+        for api in api_fixtures:
+            if partial_match(db_home, db_away, api["home"], api["away"]):
+                match["Score"] = api["score"]
+                match["Result"] = determine_result(
+                    match.get("Tip", ""),
+                    api["home_score"],
+                    api["away_score"]
+                )
+                updated += 1
+                break
 
-print(f"Loaded {len(db_matches)} DB fixtures from CSV")
+    with open(output_csv, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=db_matches[0].keys())
+        writer.writeheader()
+        writer.writerows(db_matches)
 
-# Step 3: Loop through DB matches and match with API fixtures
-updated_count = 0
-for match in db_matches:
-    db_fixture = match["Fixture"]
-    if " vs " not in db_fixture:
-        continue
-    db_home, db_away = map(str.strip, db_fixture.split(" vs "))
-    db_code = match["Code"]
+    print(f"✅ CSV updated: {updated} matches")
+    return output_csv
 
-    for api in api_fixtures:
-        if partial_match(db_home, db_away, api["home"], api["away"]):
-            # Update score
-            match["Score"] = api["score"]
-            # Update Result based on Tip
-            match["Result"] = determine_result(match.get("Tip", ""), api["home_score"], api["away_score"])
 
-            updated_count += 1
-            print(f"Updated League: {match['League']}, Fixture: {match['Fixture']}, Code: {db_code} → "
-                  f"Score: {api['score']}, Result: {match['Result']}")
-            break  # Stop searching API once matched
-
-# Step 4: Write updated CSV
-fieldnames = list(db_matches[0].keys())  # Includes Result now
-with open(output_csv_file, mode="w", newline="", encoding="utf-8") as f:
-    writer = csv.DictWriter(f, fieldnames=fieldnames)
-    writer.writeheader()
-    writer.writerows(db_matches)
-
-print(f"\nTotal matches updated: {updated_count}")
-print(f"Updated CSV saved as {output_csv_file}")
-
-# -----------------------------
-# Step 5: Update MySQL DB from CSV
-# -----------------------------
-def update_mysql_from_csv(csv_f):
-    """
-    Update soccerpunt scores/results using CSV data matched by code
-    """
+# =========================
+# MySQL Update
+# =========================
+def update_mysql_from_csv(csv_file):
     try:
         connection = kbt_funtions.db_connection()
+        cursor = connection.cursor()
+        updated = 0
 
-        if connection.is_connected():
-            db_Info = connection.get_server_info()
-            print("Connected to MySQL Server version:", db_Info)
-            cursor = connection.cursor()
-            cursor.execute("SELECT DATABASE();")
-            record = cursor.fetchone()
-            print("You're connected to database:", record)
-
-        updated_rows = 0
-
-        with open(csv_f, mode="r", encoding="utf-8") as f:
+        with open(csv_file, encoding="utf-8") as f:
             reader = csv.DictReader(f)
-
             for row in reader:
-                code = row.get("Code", "").strip()
-                score = row.get("Score", "").strip()
-                result = row.get("Result", "").strip()
-
-                if not code or score == "Not Yet":
+                if not row["Code"] or row["Score"] == "?:?":
                     continue
 
                 cursor.execute(
                     """
                     UPDATE soccerpunt
-                    SET score = %s,
-                        result = %s
+                    SET score = %s, result = %s
                     WHERE code = %s
                     """,
-                    (score, result, code)
+                    (row["Score"], row["Result"], row["Code"])
                 )
 
-                if cursor.rowcount > 0:
-                    updated_rows += 1
-                    print(f"Updated Code: {code} → Score: {score}, Result: {result}")
+                if cursor.rowcount:
+                    updated += 1
 
         connection.commit()
-        print(f"\n✅ Total records updated: {updated_rows}")
+        print(f"✅ Database updated: {updated} rows")
 
     except mysql.connector.Error as err:
-            if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-                print("Access denied (check username/password):", err)
-            elif err.errno == errorcode.ER_BAD_DB_ERROR:
-                print("Database does not exist:", err)
-            else:
-                print("MySQL error:", err)
+        print("MySQL Error:", err)
 
     finally:
-            if connection and connection.is_connected():
-                cursor.close()
-                connection.close()
-                print("MySQL connection closed")
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
 
-update_mysql_from_csv(output_csv_file)
+
+# =========================
+# RUN
+# =========================
+def run():
+    DB_CSV = "btn_match_results.csv"
+    API_CSV = "api_match_result.csv"
+    OUTPUT_CSV = "btn_match_results_updated.csv"
+
+    updated_csv = process_csvs(DB_CSV, API_CSV, OUTPUT_CSV)
+    update_mysql_from_csv(updated_csv)
+
+
+# =========================
+# Entry Point
+# =========================
+if __name__ == "__main__":
+    run()

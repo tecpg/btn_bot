@@ -1,263 +1,143 @@
-from cmath import cos
-from csv import DictReader, writer
 import csv
-import datetime
-from lib2to3.pgen2 import driver
-import pprint
-from pydoc import stripid
+import logging
 import requests
-from bs4 import BeautifulSoup as soup
-import time
-from wsgiref import headers
-# importing webdriver from selenium
-import requests
-import os
-import time
-import io
-import requests
-import mysql.connector
-from mysql.connector import errorcode
-
-from lxml import etree
+from bs4 import BeautifulSoup
 from datetime import datetime
-from datetime import timedelta
-from datetime import date
-import kbt_load_env
-from consts import global_consts as gc
-import kbt_funtions
-import requests
-from bs4 import BeautifulSoup as soup
-from csv import writer
-import logging
-
-
-global csv_data
-csv_f = gc.SAFE_BET_OVERGOALS_CSV
-
-session = requests.Session()
-my_headers = gc.MY_HEARDER
-dt = []
-
-p_date = gc.PRESENT_DAY_DMY
-# calculating end date by adding 4 days
-x_date = gc.YESTERDAY_DATE
-
-country_list = gc.COUNTRIES
-
-
-
-# Set up logging to capture errors
-logging.basicConfig(filename='error_log.txt', level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
-
-import requests
-from bs4 import BeautifulSoup as soup
-from csv import writer
-import logging
-
-# Define headers for the request (ensure this is correctly set in your environment)
-MY_HEADER = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-}
-
-import requests
-from bs4 import BeautifulSoup as soup
-import logging
-from csv import writer
-
-# Set your headers and CSV file name here
-my_headers = gc.MY_HEARDER
-
-
-def get_today_prediction(set_date):
-    url = "https://www.safertip.com/over-25"
- 
-
-    try:
-        # Fetch the webpage content
-        webpage = requests.get(url, headers=my_headers)
-        webpage.raise_for_status()  # Raise an HTTPError for bad responses (4xx and 5xx)
-    except requests.exceptions.RequestException as e:
-        logging.error(f"Failed to fetch the webpage: {e}")
-        return  # Exit the function if we can't fetch the webpage
-
-    try:
-        # Parse the webpage content with BeautifulSoup
-        bs = soup(webpage.content, "html.parser")
-    except Exception as e:
-        logging.error(f"Failed to parse the webpage content: {e}")
-        return  # Exit the function if parsing fails
-
-    try:
-        # Find all div elements with class 'tableBox'
-        tables = bs.find_all("div", {"class": "col-md-9"})
-        limited_tables = tables[:4]  # Limit to first four divs containing tables
-
-        # Check if any tables were found
-        if not limited_tables:
-            print("No 'col-md-9' divs found.")
-            return
-
-        # Loop through the first four 'tableBox' divs
-        for index, table_box in enumerate(limited_tables):
-            print(f"\nExtracting data from table {index + 1}:")
-
-            # Find the table within the div
-            table = table_box.find('table')
-
-            # Check if a table is found inside the current div
-            if not table:
-                print("No table found within this tableBox.")
-                continue
-
-            # Find all rows in the table
-            rows = table.find_all('tr')
-
-            # Loop through each row and extract specific columns
-            for row_index, row in enumerate(rows[:10]):
-                # Find all cells in the current row (both <td> and <th>)
-                cells = row.find_all(['td', 'th'])
-
-                # Check if the row contains the expected number of cells (at least 7)
-                if len(cells) >= 4:
-                    # Extract the specific columns by index
-                    
-                    league_value = cells[0].get_text(strip=True)
-                    league_prefix = league_value [:3].upper()  # Extract first 3 letters and convert to uppercase
-                    # Find matching country
-                    matching_country = next((c for c in country_list if c["2_code"] == league_prefix or c["3_code"] == league_prefix), None)
-                    if matching_country:
-                        league = matching_country["name"] 
-                        flag = matching_country["2_code"] 
-
-                    else:
-                        league = league_value
-                        flag = ''
-
-
-
-
-                    time = cells[1].get_text(strip=True)
-                    adjusted_time = kbt_funtions.adjust_to_gmt(time)
-                    fixtures = cells[2].get_text(strip=True).replace("Vs", " vs ")
-                    tip = 'Over 1.5'
-                    odd_text = cells[4].get_text(strip=True)
-
-                    try:
-                        # Convert odd to float and filter by odds >= 1.20
-                        odd = float(odd_text)
-                        if odd >= 1.15:
-                            score = 'N/A'
-                            result = 'N/A'
-                            source = 'safertip_over_15'
-                            match_date = set_date
-                            
-                            match_code = kbt_funtions.get_code(8)
-                            final_odd = kbt_funtions.get_random_odd_over_15()
-
-                            # Append the data to the list
-                            prediction = [
-                                league, fixtures, tip, final_odd, adjusted_time,
-                                score, match_date, flag, result, match_code, source
-                            ]
-                            dt.append(prediction)
-                    except ValueError:
-                        print(f"Skipping row with invalid odd value: {odd_text}")
-
-    except Exception as e:
-        logging.error(f"Failed to find match elements on the page: {e}")
-        return  # Exit the function if we can't find match elements
-
-    try:
-        # Write the extracted data to a CSV file
-        with open(csv_f, "w", encoding="utf8", newline="") as f:
-            thewriter = writer(f)
-            thewriter.writerows(dt)
-    except Exception as e:
-        logging.error(f"Error writing to CSV file: {e}")
-
-    # Print the collected data
-    print(dt)
-
 import traceback
 
-# ---------- POST TO MYSQL ----------
-def connect_server():
-    connection = None  # important: prevents UnboundLocalError
+from consts import global_consts as gc
+import kbt_funtions
+
+# CSV file path
+csv_f = gc.SAFE_BET_OVERGOALS_CSV
+
+# Headers for requests
+my_headers = gc.MY_HEARDER
+
+# Today's date in Y-m-d format
+p_date = gc.PRESENT_DAY_YMD
+
+# -----------------------------
+# Set up logging for errors
+# -----------------------------
+logging.basicConfig(
+    filename='error_log.txt',
+    level=logging.ERROR,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+
+# -----------------------------
+# Function to scrape today's predictions
+# -----------------------------
+def get_today_prediction(set_date):
+    url = "https://www.safertip.com/over-25"
+    predictions = []
 
     try:
-        connection = kbt_funtions.db_connection()
+        response = requests.get(url, headers=my_headers, timeout=15)
+        response.raise_for_status()
+    except requests.RequestException as e:
+        logging.error(f"Fetch failed: {e}")
+        return predictions
 
-        if connection and connection.is_connected():
-            db_Info = connection.get_server_info()
-            print("Connected to MySQL Server version:", db_Info)
+    bs = BeautifulSoup(response.content, "html.parser")
+    tables = bs.find_all("div", class_="col-md-9")[:4]  # Limit to first 4 tables
 
-            cursor = connection.cursor()
-            cursor.execute("SELECT DATABASE();")
-            record = cursor.fetchone()
-            print("You're connected to database:", record)
-        else:
-            print("❌ Connection failed: connection is None or not connected")
-            return  # stop here, no connection available
+    for table_box in tables:
+        table = table_box.find("table")
+        if not table:
+            continue
 
-        # ---- PROCESS CSV ----
-        with open(csv_f, "r", encoding="utf-8") as f:
-            csv_data = csv.reader(f)
-            next(csv_data)  # skip header
+        for row in table.find_all("tr")[1:10]:  # Skip header, limit to 10 rows per table
+            cells = row.find_all("td")
+            if len(cells) < 5:
+                continue
 
-            for row in csv_data:
-                if row:
-                    try:
-                        cursor.execute(
-                            '''
-                            INSERT INTO soccerpunt
-                            (league, fixtures, tip, odd, match_time, score, date, flag, result, code, source, protip)
-                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                            ''',
-                            row
-                        )
-                    except Exception as insert_err:
-                        print("❌ Insert ERROR on row:", row)
-                        print("Error:", insert_err)
-                        traceback.print_exc()  # <--- FULL ERROR TRACE
-                        continue  # skip bad row
+            league_raw = cells[0].get_text(strip=True)
+            time_raw = cells[1].get_text(strip=True)
+            fixtures = cells[2].get_text(strip=True).replace("Vs", " vs ")
+            odd_text = cells[4].get_text(strip=True)
 
-        print("Inserting tips now... ", time.ctime())
+            try:
+                odd = float(odd_text)
+                if odd < 1.15:  # Skip very low odds
+                    continue
+            except ValueError:
+                continue
 
-        # DELETE DUPLICATES
-        cursor.execute('''
-            DELETE t1 FROM soccerpunt AS t1
-            INNER JOIN soccerpunt AS t2
-            ON t1.fixtures = t2.fixtures
-            AND t1.source = t2.source
-            AND t1.id < t2.id
-        ''')
-        print("Duplicate cleanup done", time.ctime())
+            adjusted_time = kbt_funtions.adjust_to_gmt(time_raw)
 
-    except mysql.connector.Error as err:
-        print("❌ MySQL ERROR:", err)
-        traceback.print_exc()  # <--- SHOW EXACT LINE OF FAILURE
+            # Prepare row for CSV
+            predictions.append([
+                league_raw,
+                fixtures,
+                "Over 1.5",
+                kbt_funtions.get_random_odd_over_15(),  # random odd function
+                adjusted_time,
+                "?:?",       # score
+                set_date,    # date
+                set_date,    # match_date
+                "",          # flag
+                "N/A",       # league_flag
+                "N/A",       # league_flag
+                "",          # home_flag
+                "",          # away_flag
+                "?",   # result
+                kbt_funtions.get_code(8),  # code
+                "safertip_over_15",  # source
+                0            # protip
+            ])
+
+    return predictions
+
+# -----------------------------
+# Function to save predictions to CSV
+# -----------------------------
+def save_predictions_to_csv(predictions, csv_file):
+    if not predictions:
+        print("⚠️ No predictions to save")
+        return
+
+    try:
+        with open(csv_file, mode="w", newline='', encoding="utf-8") as f:
+            writer = csv.writer(f)
+            # Write header
+            writer.writerow([
+                "League",
+                "Fixtures",
+                "Tip",
+                "Odd",
+                "Match Time",
+                "Score",
+                "Date",
+                "Match Date",
+                
+                "League Logo",
+                "League Flag",
+                "Home Flag",
+                "Away Flag",
+                "Flag",
+                "Result",
+                "Code",
+                "Source",
+                "Protip"
+            ])
+            # Write all rows
+            writer.writerows(predictions)
+
+        print(f"✅ Predictions saved to {csv_file}")
 
     except Exception as e:
-        print("❌ General ERROR:", e)
-        traceback.print_exc()  # <--- SHOW EXACT LINE OF FAILURE
-
-    finally:
-        if connection and connection.is_connected():
-            cursor.close()
-            connection.commit()
-            connection.close()
-            print("MySQL connection is closed")
-        else:
-            print("⚠️ No active connection to close")
+        logging.error(f"Failed to write CSV: {e}")
+        traceback.print_exc()
 
 
-
-    
+# -----------------------------
+# Main run function
+# -----------------------------
 def run():
-    get_today_prediction(p_date)
-
-   
-    connect_server()
+    predictions = get_today_prediction(p_date)
+    save_predictions_to_csv(predictions, csv_f)
 
 
 if __name__ == "__main__":

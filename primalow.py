@@ -1,5 +1,7 @@
 import csv
+import logging
 import random
+import traceback
 import requests
 from bs4 import BeautifulSoup
 import time
@@ -11,7 +13,7 @@ from consts import global_consts as gc
 BASE_URL = "https://primatips.com/tips/"
 
 date_ = gc.PRESENT_DAY_DATE
-p_date = gc.PRESENT_DAY_DMY
+p_date = gc.PRESENT_DAY_YMD
 csv_f = gc.PRIMA_LOW_CSV  # CSV file path
 
 headers_list = [
@@ -76,6 +78,7 @@ def scrape_tipsomatic(date=None, limit=25):
         match["url"] = BASE_URL + game.get("href", "")
         match["match_time"] = game.select_one(".tm").text.strip() if game.select_one(".tm") else None
         match["date"] = p_date
+        match["match_date"] = p_date
         match["source"] = "primalow_tips"
         match["flag"] = ""
         match["protip"] = ""
@@ -100,11 +103,11 @@ def scrape_tipsomatic(date=None, limit=25):
             elif "ls" in to_span.get("class", []):
                 match["result"] = "Lost"
             else:
-                match["result"] = "Not yet"
+                match["result"] = "?"
         else:
             match["tip"] = None
             match["odd"] = None
-            match["result"] = "Not yet"
+            match["result"] = "?"
 
         # Filter: only 1X or X2 tips, with odd ≥ 1.40
         # ✅ Filter: only odd between 1.10 and 1.50
@@ -128,61 +131,74 @@ def scrape_tipsomatic(date=None, limit=25):
 
     return matches
 
+def save_predictions_to_csv(predictions, csv_file):
+    if not predictions:
+        print("⚠️ No predictions to save")
+        return
 
-# ---------- SAVE TO CSV ----------
-def save_to_csv(matches, file_path):
-    keys = ["league", "fixtures", "tip", "odd", "match_time", "score",
-            "date", "flag", "result", "code", "source", "protip",]
-    with open(file_path, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=keys)
-        writer.writeheader()
-        for match in matches:
-            row = {k: match.get(k, "") for k in keys}
-            writer.writerow(row)
-    print(f"\n💾 Saved top {len(matches)} matches to {file_path}\n")
-
-
-# ---------- POST TO MYSQL ----------
-def post_to_mysql():
     try:
-        connection = kbt_funtions.db_connection()
-        if connection.is_connected():
-            db_Info = connection.get_server_info()
-            print("Connected to MySQL Server version ", db_Info)
-            cursor = connection.cursor()
-            cursor.execute("SELECT DATABASE();")
-            record = cursor.fetchone()
-            print("You're connected to database: ", record)
+        with open(csv_file, mode="w", newline='', encoding="utf-8") as f:
+            writer = csv.writer(f)
+            # Write header
+            header = [
+                "League",
+                "Fixtures",
+                "Tip",
+                "Odd",
+                "Match Time",
+                "Score",
+                "Date",
+                "Match Date",
+              
+                "League Logo",
+                "League Flag",
+                "Home Flag",
+                "Away Flag",
+                  "Flag",
+                "Result",
+                "Code",
+                "Source",
+                "Protip"
+            ]
+            writer.writerow(header)
 
-        with open(csv_f, "r", encoding="utf-8") as f:
-            csv_data = csv.reader(f)
-            next(csv_data)  # skip header
-            for row in csv_data:
-                if row:
-                    cursor.execute(
-                        'INSERT INTO soccerpunt(league, fixtures, tip, odd, match_time, score, date, flag, result, code, source, protip) '
-                        'VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
-                        row
-                    )
+            # Convert dicts to row lists
+            for match in predictions:
+                row = [
+                    match.get("league", ""),
+                    match.get("fixtures", ""),
+                    match.get("tip", ""),
+                    match.get("odd", ""),
+                    match.get("match_time", ""),
+                    match.get("score", ""),
+                    match.get("date", ""),
+                    match.get("match_date", ""),
+                    match.get("flag", ""),
+                    match.get("league_logo", ""),
+                    match.get("league_flag", ""),
+                    match.get("home_flag", ""),
+                    match.get("away_flag", ""),
+                    match.get("result", ""),
+                    match.get("code", ""),
+                    match.get("source", ""),
+                    match.get("protip", "")
+                ]
+                writer.writerow(row)
 
-        print("Inserting tips now... ", time.ctime())
-        cursor.execute('DELETE t1 FROM soccerpunt AS t1 INNER JOIN soccerpunt AS t2 '
-                       'WHERE t1.id < t2.id AND t1.fixtures = t2.fixtures AND t1.source = t2.source')
-        print("Duplicate cleanup done", time.ctime())
+        print(f"✅ Predictions saved to {csv_file}")
 
-    except mysql.connector.Error as err:
-        print("MySQL error:", err)
-
-    finally:
-        if connection.is_connected():
-            cursor.close()
-            connection.commit()
-            connection.close()
-            print("MySQL connection is closed")
+    except Exception as e:
+        logging.error(f"Failed to write CSV: {e}")
+        traceback.print_exc()
 
 
-# ---------- MAIN EXECUTION ----------
-if __name__ == "__main__":
+
+
+def run():
     today_matches = scrape_tipsomatic(limit=25)
-    save_to_csv(today_matches, csv_f)
-    post_to_mysql()
+    save_predictions_to_csv(today_matches, csv_f)
+    
+
+
+if __name__ == "__main__":
+     run()

@@ -167,6 +167,8 @@ def scrape_basketball_data(set_date):
                     home_score = spans[0].get_text(strip=True)
                     away_score = spans[1].get_text(strip=True)
                     final_score = f"{home_score} - {away_score}"
+
+                    print( final_score)
                 else:
                     final_score = "N/A"
             else:
@@ -218,7 +220,7 @@ def scrape_basketball_data(set_date):
                 pred,
                 "",                     # odd
                 time_only,              # match_time
-                score_text,
+                final_score,
                 date_only,
                 f"{flag_name} - {img_code}",
                 result,
@@ -226,7 +228,7 @@ def scrape_basketball_data(set_date):
                 "fb_tennis",
                 f"{prob1} - {prob2}",
                 avg_points,
-                final_score,
+                'score_text',
                 fixtures_link,
                 league_slug,
             ]
@@ -245,7 +247,7 @@ def save_to_csv(rows):
         writer_ = csv.writer(f)
         writer_.writerow([
             "league", "fixtures", "tip", "odd", "match_time", "score", "date",
-            "flag", "result", "code", "source", "rate", "avg_point","correct_score" ,"fixtures_link, league_slug"
+            "flag", "result", "code", "source", "rate", "avg_point","correct_score" ,"fixtures_link"," league_slug"
         ])
         writer_.writerows(rows)
     print(f"Saved {len(rows)} rows to {csv_f}")
@@ -295,7 +297,7 @@ def post_to_mysql():
         print("============Bot deleting previous tips from  database:=============== ")
 
 
-        cursor.execute('DELETE t1 FROM tennis AS t1 INNER JOIN basketball AS t2 WHERE t1.id < t2.id AND t1.fixtures = t2.fixtures AND t1.source = t2.source')
+        cursor.execute('DELETE t1 FROM tennis AS t1 INNER JOIN tennis AS t2 WHERE t1.id < t2.id AND t1.fixtures = t2.fixtures AND t1.source = t2.source')
 
             
         print(cursor.rowcount," record(s) deleted==============", time.ctime()) 
