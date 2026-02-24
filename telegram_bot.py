@@ -6,7 +6,7 @@ from consts import global_consts as gc
 import kbt_funtions
 
 csv_f = gc.TELEGRAM_BOT_CSV
-_date = gc.YESTERDAY_YMD  # Change to any date you need
+_date = "2026-02-18" # Change to any date you need
 
 
 def result_to_emoji(result):

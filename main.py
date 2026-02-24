@@ -1,41 +1,92 @@
 import time
 import logging
-import all_betcodes, get_rightside_odds, oddslot, prima_tips,  primalow, over1_5goals, get_vip_2, get_btn_match_results, api_call, api_call_result, add_flags_to_matches, update_btn_results
+import signal
+import sys
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
+import all_betcodes
+import get_rightside_odds
+import oddslot
+import prima_tips
+import primalow
+import over1_5goals
+import get_vip_2
+import get_btn_match_results
+import api_call
+import api_call_result
+import add_flags_to_matches
+import update_btn_results
 
+# -----------------------------
+# Logging setup
+# -----------------------------
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
+RUN_INTERVAL = 3600  # 1 hour
+
+running = True
+
+# -----------------------------
+# Graceful shutdown
+# -----------------------------
+def shutdown_handler(signum, frame):
+    global running
+    logging.warning("Shutdown signal received. Exiting gracefully...")
+    running = False
+
+signal.signal(signal.SIGINT, shutdown_handler)   # Ctrl+C
+signal.signal(signal.SIGTERM, shutdown_handler)  # Server stop
+
+# -----------------------------
+# Task Runner
+# -----------------------------
 def run_tasks():
-    logging.info("Starting daily task...")
-    try:
-        all_betcodes.run()
-        time.sleep(5)  # small delay between tasks
-        oddslot.run()
-        time.sleep(5)
-        get_rightside_odds.run()
-        time.sleep(5)
-        api_call.run()
-        time.sleep(5)
-        api_call_result.run()
-        time.sleep(5)
-        get_vip_2.run()
-        time.sleep(5)
-        get_btn_match_results.run()
-        time.sleep(5)
-        prima_tips.run()
-        time.sleep(5)
-        primalow.run()
-        time.sleep(5)
-        over1_5goals.run()
-        time.sleep(5)
-        add_flags_to_matches.run()
-        time.sleep(5)
-        update_btn_results.run()
-        logging.info("Task completed successfully.")
-    except Exception as e:
-        logging.error(f"Error during task: {e}")
+    logging.info("🚀 Starting daily task pipeline...")
 
-if __name__ == "__main__":
-    while True:
+    tasks = [
+        all_betcodes.run,
+        oddslot.run,
+        get_rightside_odds.run,
+        api_call.run,
+        api_call_result.run,
+        get_vip_2.run,
+        get_btn_match_results.run,
+        prima_tips.run,
+        primalow.run,
+        over1_5goals.run,
+        add_flags_to_matches.run,
+        update_btn_results.run,
+    ]
+
+    for task in tasks:
+        try:
+            logging.info(f"▶ Running {task.__module__}.run()")
+            task()
+            time.sleep(5)
+        except Exception as e:
+            logging.exception(f"❌ Error in {task.__module__}: {e}")
+
+    logging.info("✅ Task cycle completed successfully")
+
+# -----------------------------
+# Main loop
+# -----------------------------
+def run():
+    global running
+    while running:
         run_tasks()
-        logging.info("Sleeping for 1 hour before next run...")
-        time.sleep(3600)  # wait 1 hour
+        if not running:
+            break
+        logging.info(f"🕒 Sleeping for {RUN_INTERVAL // 60} minutes...")
+        time.sleep(RUN_INTERVAL)
+
+    logging.info("🛑 Scheduler stopped")
+    sys.exit(0)
+
+# -----------------------------
+# Entry point
+# -----------------------------
+if __name__ == "__main__":
+    run()

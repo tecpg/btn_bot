@@ -154,10 +154,10 @@ def post_tips():
         for sublist in selected_list:
             if kbt_funtions.check_odd_range(sublist[3]):
                 if free_assigned <= 2:
-                    sublist[12] = 'free'
+                    sublist[16] = 'free'
                     free_assigned += 1
                 else:
-                    sublist[12] = 'premium'
+                    sublist[16] = 'premium'
 
                 sublist[3] = round(sublist[3] + 0.04, 2)
                 match_list = [str(value) for value in sublist]

@@ -1,54 +1,27 @@
-from csv import writer
-import random
 
-import kbt_funtions
-from cmath import cos
-from csv import DictReader, writer
 import csv
-import datetime
-from lib2to3.pgen2 import driver
 import random
-import string
-from urllib import request
-import requests
-from bs4 import BeautifulSoup as soup
 import time
-from wsgiref import headers
-# importing webdriver from selenium
-import requests
-import os
-import time
-import io
-import requests
-import mysql.connector
-from mysql.connector import errorcode
-from datetime import date
-from lxml import etree
-import kbt_funtions
-from consts import global_consts as gc
 from datetime import datetime
 
-
-date_ = gc.PRESENT_DAY_DATE
-p_date = gc.PRESENT_DAY_DMY
-
-csv_f = gc.BASKETBALL_CSV
-
-additional_headers = {
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Referer": "https://www.google.com",
-    "Connection": "keep-alive"
-}
-
-my_headers = gc.MY_HEARDER
-
-country_name = gc.COUNTRIES
-
-from playwright.sync_api import sync_playwright
+import mysql.connector
+from mysql.connector import errorcode
 from bs4 import BeautifulSoup
+from playwright.sync_api import sync_playwright
 
-headers_list = [
+import kbt_funtions
+from consts import global_consts as gc
+
+
+# =========================
+# CONFIG
+# =========================
+
+CSV_FILE = gc.BASKETBALL_CSV
+COUNTRIES = gc.COUNTRIES
+TODAY_URL = "https://www.forebet.com/en/basketball/predictions-today"
+
+HEADERS_LIST = [
    {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36", "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"},
     {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36", "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"},
     {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36", "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"},
@@ -81,216 +54,203 @@ headers_list = [
    
 ]
 
-additional_headers = {
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+
+
+EXTRA_HEADERS = {
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.9",
-    "Referer": "https://www.google.com",
-    "Connection": "keep-alive"
+    "Connection": "keep-alive",
 }
 
-def get_random_headers():
-    return {**random.choice(headers_list), **additional_headers}
 
-def get_country_name_from_code(img_code, countries):
-    for country in countries:
-        if img_code.lower() == country["2_code"].lower() or img_code.lower() == country["3_code"].lower():
+# =========================
+# HELPERS
+# =========================
+
+def get_random_headers():
+    return {**random.choice(HEADERS_LIST), **EXTRA_HEADERS}
+
+
+def get_country_name_from_code(img_code: str) -> str:
+    for country in COUNTRIES:
+        if img_code.lower() in (
+            country["2_code"].lower(),
+            country["3_code"].lower(),
+        ):
             return country["name"]
     return ""
 
+
+# =========================
+# SCRAPER
+# =========================
+
 def scrape_basketball_data():
-    all_rows = []
+    rows = []
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        headers = get_random_headers()
+        browser = p.chromium.launch(headless=True, slow_mo=40)
 
+        headers = get_random_headers()
         context = browser.new_context(
-            user_agent=headers.get("User-Agent"),
+            user_agent=headers["User-Agent"],
             locale="en-US",
-            extra_http_headers=headers
+            viewport={"width": 1280, "height": 800},
+            extra_http_headers=headers,
         )
 
+        # Hide automation flag
+        context.add_init_script("""
+            Object.defineProperty(navigator, 'webdriver', {
+                get: () => undefined
+            });
+        """)
+
         page = context.new_page()
-        page.goto("https://www.forebet.com/en/basketball/predictions-today")
-        page.wait_for_selector("h1.frontH", timeout=60000)
+        page.goto(TODAY_URL, wait_until="networkidle", timeout=90000)
+        page.wait_for_selector(".rcnt", timeout=90000)
+
         html = page.content()
         browser.close()
 
     soup = BeautifulSoup(html, "html.parser")
     games = soup.select(".rcnt")
-    print(f"Found {len(games)} games.")
+    print(f"✅ Found {len(games)} games")
 
-    for i, game in enumerate(games):
-        if i >= 50:  # ✅ Limit to first 50 games
-            break
-
+    for game in games[:50]:
         try:
             league = game.select_one(".shortTag")
             home = game.select_one(".homeTeam span")
             away = game.select_one(".awayTeam span")
-            date_ = game.select_one(".date_bah")
-            prob1 = game.select_one(".fprc span:nth-of-type(1)")
-            prob2 = game.select_one(".fprc span:nth-of-type(2)")
+            date_tag = game.select_one(".date_bah")
             pred_div = game.select_one("div.predict")
 
             pred = pred_div.get_text(strip=True) if pred_div else "N/A"
 
             result = "N/A"
             if pred_div and "class" in pred_div.attrs:
-                class_list = pred_div["class"]
-                if "predict_y" in class_list:
+                if "predict_y" in pred_div["class"]:
                     result = "Won"
-                elif "predict_no" in class_list:
+                elif "predict_no" in pred_div["class"]:
                     result = "Lost"
 
             score = game.select_one(".ex_sc b")
             avg_points = game.select_one(".avg_sc")
 
-            img_tag = game.select_one('div.shortagDiv.tghov img')
-            img_link = img_tag['src'] if img_tag else ""
-            img_code = img_link.split('/')[-1].split('.')[0] if img_link else ""
-            flag_name = get_country_name_from_code(img_code, country_name)
+            img_tag = game.select_one("div.shortagDiv img")
+            img_code = img_tag["src"].split("/")[-1].split(".")[0] if img_tag else ""
+            flag_name = get_country_name_from_code(img_code)
 
             a_tag = game.select_one("a.tnmscn")
-            if a_tag and a_tag.has_attr("href"):
-                href = a_tag["href"]
-                path_parts = href.strip("/").split("/")
-                league_slug = path_parts[3] if len(path_parts) > 4 else ""
-                fixtures_link = f"https://www.forebet.com{href}" if href else ""
-            else:
-                league_slug = ""
-                fixtures_link = ""
+            fixtures_link = f"https://www.forebet.com{a_tag['href']}" if a_tag else ""
+            league_slug = a_tag["href"].split("/")[3] if a_tag else ""
 
-            league = league.text.strip() if league else ""
-            home = home.text.strip() if home else "N/A"
-            away = away.text.strip() if away else "N/A"
-
-            date_time_str = date_.text.strip() if date_ else "N/A"
-            if date_time_str != "N/A":
+            # Date parsing
+            date_only, time_only = "N/A", "N/A"
+            if date_tag:
                 try:
-                    dt = datetime.strptime(date_time_str, "%d/%m/%Y %H:%M")
+                    dt = datetime.strptime(date_tag.text.strip(), "%d/%m/%Y %H:%M")
                     date_only = dt.strftime("%d-%m-%Y")
                     time_only = dt.strftime("%H:%M")
                 except ValueError:
-                    date_only = "N/A"
-                    time_only = "N/A"
-            else:
-                date_only = "N/A"
-                time_only = "N/A"
+                    pass
 
-            prob1 = prob1.text.strip() if prob1 else "N/A"
-            prob2 = prob2.text.strip() if prob2 else "N/A"
-            score1 = score.text.strip() if score else "N/A"
-            score2 = score.find_next("br").next_sibling.strip() if score else "N/A"
+            score_text = score.text.strip() if score else "N/A"
             avg_points = avg_points.text.strip() if avg_points else "N/A"
             code = kbt_funtions.get_code(8)
 
-            row = [
-                league,
-                f"{home} vs {away}",
+            rows.append([
+                league.text.strip() if league else "",
+                f"{home.text.strip()} vs {away.text.strip()}",
                 pred,
-                "",                     # odd
-                time_only,              # match_time
-                f"{score1} - {score2}",
+                "",
+                time_only,
+                score_text,
                 date_only,
                 f"{flag_name} - {img_code}",
                 result,
                 code,
                 "fb_basketball",
-                f"{prob1} - {prob2}",
+                "",
                 avg_points,
-                f"{score1} - {score2}",
+                score_text,
                 fixtures_link,
                 league_slug,
-            ]
-
-            all_rows.append(row)
+            ])
 
         except Exception as e:
-            print("Error parsing game:", e)
+            print("⚠️ Error parsing game:", e)
 
-    print(f"✅ Returning {len(all_rows)} games.")
-    return all_rows
+    print(f"✅ Returning {len(rows)} games")
+    return rows
 
+
+# =========================
+# CSV
+# =========================
 
 def save_to_csv(rows):
-    with open(csv_f, "w", newline="", encoding="utf-8") as f:
-        writer_ = csv.writer(f)
-        writer_.writerow([
+    with open(CSV_FILE, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow([
             "league", "fixtures", "tip", "odd", "match_time", "score", "date",
-            "flag", "result", "code", "source", "rate", "avg_point","correct_score" ,"fixtures_link, league_slug"
+            "flag", "result", "code", "source", "rate",
+            "avg_point", "correct_score", "fixtures_link", "league_slug"
         ])
-        writer_.writerows(rows)
-    print(f"Saved {len(rows)} rows to {csv_f}")
+        writer.writerows(rows)
+
+    print(f"✅ Saved {len(rows)} rows to {CSV_FILE}")
 
 
+# =========================
+# MYSQL
+# =========================
 
 def post_to_mysql():
-    # #insert into db
-
-    # csv_f = "oddslot_data.csv"
-    #NOTE::::::::::::when i experience bad connection: 10458 (28000) in ip i browse my ip address and paste it inside cpanel add host then copy my cpanel sharedhost ip
-    #and paste here as my host ip address
     try:
         connection = kbt_funtions.db_connection()
-        
-        if connection.is_connected():
-            db_Info = connection.get_server_info()
-            print("Connected to MySQL Server version ", db_Info)
-            cursor = connection.cursor()
-            cursor.execute("select database();")
-            record = cursor.fetchone()
+        cursor = connection.cursor()
 
-            print("You're connected to database: ", record)
+        with open(CSV_FILE, "r", encoding="utf-8") as f:
+            reader = csv.reader(f)
+            next(reader)  # skip header
 
-                
-        with open(csv_f, "r") as f:
-        
-            csv_data = csv.reader(f)
-            for row in csv_data:
-                if len(row) == 16:
-                    cursor.execute(
-                        'INSERT INTO basketball (league, fixtures, tip, odd, match_time, score, date, flag, result, code, source,rate, avg_point,correct_score,fixtures_link, league_slug)'
-                        'VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
-                        row
-                    )
-                else:
-                    print(f"Skipping row with incorrect number of values: {row}")
+            for row in reader:
+                cursor.execute(
+                    """
+                    INSERT INTO basketball
+                    (league, fixtures, tip, odd, match_time, score, date, flag,
+                     result, code, source, rate, avg_point, correct_score,
+                     fixtures_link, league_slug)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                    """,
+                    row
+                )
 
-               
+        # Remove duplicates
+        cursor.execute("""
+            DELETE t1 FROM basketball t1
+            INNER JOIN basketball t2
+            WHERE t1.id < t2.id
+            AND t1.fixtures = t2.fixtures
+            AND t1.source = t2.source
+        """)
 
-        print("Inserting tips now... ", time.ctime())
-        print(cursor.rowcount," record(s) created==============", time.ctime())
-
-        
-        time.sleep(3) 
-        print("==============Bot is taking a nap... whopps!==================== ", time.ctime())  
-        print("============Bot deleting previous tips from  database:=============== ")
-
-
-        cursor.execute('DELETE t1 FROM basketball AS t1 INNER JOIN basketball AS t2 WHERE t1.id < t2.id AND t1.fixtures = t2.fixtures AND t1.source = t2.source')
-
-            
-        print(cursor.rowcount," record(s) deleted==============", time.ctime()) 
-
-
+        connection.commit()
+        print("✅ MySQL insert & cleanup completed")
 
     except mysql.connector.Error as err:
-        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-            print("Something is wrong with your user name or password ", err)
-        elif err.errno == errorcode.ER_BAD_DB_ERROR:
-            print("Database does not exist")
-        else:
-            print("Error while connecting to MySQL", err)
+        print("❌ MySQL error:", err)
 
     finally:
-        if connection and connection.is_connected():
+        if connection.is_connected():
             cursor.close()
-            connection.commit()
             connection.close()
-                
-            print("MySQL connection is closed")
 
+
+# =========================
+# MAIN
+# =========================
 
 def main():
     rows = scrape_basketball_data()
@@ -298,7 +258,7 @@ def main():
         save_to_csv(rows)
         post_to_mysql()
     else:
-        print("No games found or something went wrong.")
+        print("❌ No games found")
 
 
 if __name__ == "__main__":
