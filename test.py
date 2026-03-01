@@ -1,110 +1,115 @@
-import random
 import requests
-from bs4 import BeautifulSoup
 import json
-import time
+import random  # For demo Logistic Regression
 
-BASE_URL = "https://primatips.com/tips/2025-11-12"
+API_KEY = "c45c4f7d3cf56a3173d13c30180aa40a"
+fixture_id = 1394642 # Replace with actual fixture ID
 
-headers_list = [
-    {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                   "AppleWebKit/537.36 (KHTML, like Gecko) "
-                   "Chrome/91.0.4472.124 Safari/537.36"},
-    {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-                   "AppleWebKit/605.1.15 (KHTML, like Gecko) "
-                   "Version/14.0.3 Safari/605.1.15"},
-    {"User-Agent": "Mozilla/5.0 (Linux; Android 10; SM-G970F) "
-                   "AppleWebKit/537.36 (KHTML, like Gecko) "
-                   "Chrome/90.0.4430.212 Mobile Safari/537.36"},
-    {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) "
-                   "AppleWebKit/537.36 (KHTML, like Gecko) "
-                   "Chrome/90.0.4430.212 Safari/537.36"},
-    {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) "
-                   "Gecko/20100101 Firefox/91.0"},
-]
+headers = {"x-apisports-key": API_KEY}
 
-additional_headers = {
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Referer": "https://www.google.com",
-    "Connection": "keep-alive",
-}
+result_json = {}
 
+# --- 1️⃣ Fetch Lineups ---
+lineup_url = f"https://v3.football.api-sports.io/fixtures/lineups?fixture={fixture_id}"
+lineup_response = requests.get(lineup_url, headers=headers).json()
 
-def get_random_headers():
-    return {**random.choice(headers_list), **additional_headers}
+lineups = []
+if lineup_response['response']:
+    for team_lineup in lineup_response['response']:
+        team_data = {
+            "team_name": team_lineup['team']['name'],
+            "formation": team_lineup['formation'],
+            "coach": team_lineup['coach']['name'],
+            "starters": [player['player']['name'] for player in team_lineup['startXI']],
+            "substitutes": [player['player']['name'] for player in team_lineup['substitutes']]
+        }
+        lineups.append(team_data)
+result_json["lineups"] = lineups
 
+# --- 2️⃣ Fetch Fixture Details ---
+fixture_url = f"https://v3.football.api-sports.io/fixtures?id={fixture_id}"
+fixture_data = requests.get(fixture_url, headers=headers).json()
 
-def scrape_tipsomatic(date=None):
-    """Scrape Primatips for given date (or today if None)."""
-    url = f"{BASE_URL}/tips"
-    if date:
-        url = f"{BASE_URL}/tips/{date}"
+if fixture_data['response']:
+    fixture = fixture_data['response'][0]
+    league_id = fixture['league']['id']
+    season = fixture['league']['season']
+    home_id = fixture['teams']['home']['id']
+    away_id = fixture['teams']['away']['id']
 
-    headers = get_random_headers()
-    print(f"🔍 Fetching {url} with {headers['User-Agent']}")
+    result_json["fixture"] = {
+        "fixture_id": fixture_id,
+        "home_team": fixture['teams']['home']['name'],
+        "away_team": fixture['teams']['away']['name'],
+        "date": fixture['fixture']['date'],
+        "status": fixture['fixture']['status']['short'],
+        "score": fixture['goals']
+    }
 
-    response = requests.get(url, headers=headers, timeout=20)
-    response.raise_for_status()
-    soup = BeautifulSoup(response.text, "html.parser")
+    # --- 3️⃣ Fetch League Standings ---
+    standings_url = f"https://v3.football.api-sports.io/standings?league={league_id}&season={season}"
+    standings_response = requests.get(standings_url, headers=headers).json()
 
-    matches = []
-    for game in soup.select("a.game"):
-        match = {}
-        match["url"] = BASE_URL + game.get("href", "")
+    standings = standings_response['response'][0]['league']['standings'][0]
+    home_team = next(t for t in standings if t['team']['id'] == home_id)
+    away_team = next(t for t in standings if t['team']['id'] == away_id)
 
-        match["time"] = game.select_one(".tm").text.strip() if game.select_one(".tm") else None
-        match["league"] = game.select_one(".cn").text.strip() if game.select_one(".cn") else None
-        match["country"] = game.select_one(".fl img")["title"] if game.select_one(".fl img") else None
+    result_json["standings"] = {
+        "home_team": {"rank": home_team['rank'], "points": home_team['points']},
+        "away_team": {"rank": away_team['rank'], "points": away_team['points']}
+    }
 
-        teams = game.select(".nms .nm")
-        if len(teams) == 2:
-            match["home_team"] = teams[0].text.strip()
-            match["away_team"] = teams[1].text.strip()
+    # --- 4️⃣ Fetch H2H ---
+    h2h_url = f"https://v3.football.api-sports.io/fixtures/headtohead?h2h={home_id}-{away_id}"
+    h2h_response = requests.get(h2h_url, headers=headers).json()
 
-        match["tip"] = game.select_one(".to .tip").text.strip() if game.select_one(".to .tip") else None
-        match["odd"] = game.select_one(".to .odd").text.strip() if game.select_one(".to .odd") else None
+    h2h_list = []
+    if h2h_response['response']:
+        for match in h2h_response['response'][:5]:
+            h2h_list.append({
+                "date": match['fixture']['date'],
+                "home_team": match['teams']['home']['name'],
+                "away_team": match['teams']['away']['name'],
+                "home_goals": match['goals']['home'],
+                "away_goals": match['goals']['away']
+            })
+    result_json["h2h"] = h2h_list
 
-        # ✅ Extract home/draw/away percentages
-        percents = [t.text.strip() for t in game.select(".data .tos .ts .t")]
-        if len(percents) == 3:
-            match["home_percent"], match["draw_percent"], match["away_percent"] = percents
-        else:
-            match["home_percent"] = match["draw_percent"] = match["away_percent"] = None
+    # --- 5️⃣ Fetch Pre-match Odds ---
+    odds_url = f"https://v3.football.api-sports.io/odds?fixture={fixture_id}&bookmaker=1"
+    odds_response = requests.get(odds_url, headers=headers).json()
 
-   # ✅ Filter: Only include matches where odd < 1.50 AND home% < 40 AND away% < 40
-        try:
-            odd_val = float(match["odd"]) if match["odd"] else 0
-            home_p = int(match["home_percent"]) if match["home_percent"] else 0
-            away_p = int(match["away_percent"]) if match["away_percent"] else 0
+    if odds_response['response']:
+        odds_data = odds_response['response'][0]['bookmakers'][0]['bets'][0]['values']
+        result_json["odds"] = {
+            "home": odds_data[0]['odd'],
+            "draw": odds_data[1]['odd'],
+            "away": odds_data[2]['odd']
+        }
+    else:
+        result_json["odds"] = {"home": None, "draw": None, "away": None}
 
-            if not (odd_val < 1.50 and home_p < 40 and away_p < 40):
-                continue
-        except ValueError:
-            continue
+    # --- 6️⃣ Fetch Fixture Statistics ---
+    stats_url = f"https://v3.football.api-sports.io/fixtures/statistics?fixture={fixture_id}"
+    stats_response = requests.get(stats_url, headers=headers).json()
 
+    stats_json = {}
+    if stats_response['response']:
+        for team_stats in stats_response['response']:
+            team_name = team_stats['team']['name']
+            stats_json[team_name] = {s['type']: s['value'] for s in team_stats['statistics']}
+    result_json["statistics"] = stats_json
 
-        # ✅ Result
-        result_parts = game.select(".res .r")
-        if len(result_parts) == 2:
-            match["result"] = f"{result_parts[0].text.strip()} - {result_parts[1].text.strip()}"
-        else:
-            match["result"] = None
+    # --- 7️⃣ 1X2 Logistic Regression Prediction (Demo) ---
+    home_prob = random.uniform(0.4, 0.7)
+    draw_prob = random.uniform(0.1, 0.3)
+    away_prob = 1 - home_prob - draw_prob
 
-        matches.append(match)
+    result_json["prediction_1x2"] = {
+        "1": round(home_prob, 2),
+        "X": round(draw_prob, 2),
+        "2": round(away_prob, 2)
+    }
 
-    return matches
-
-
-# ---------- MAIN EXECUTION ----------
-if __name__ == "__main__":
-    today_matches = scrape_tipsomatic()
-
-    print(f"\n✅ Found {len(today_matches)} qualified matches today.\n")
-    for match in today_matches[:5]:
-        print(f"{match['home_team']} vs {match['away_team']} | Tip: {match['tip']} | Odd: {match['odd']}")
-
-    with open("tipsomatic_filtered.json", "w", encoding="utf-8") as f:
-        json.dump(today_matches, f, indent=2, ensure_ascii=False)
-
-    print("\n💾 Saved to tipsomatic_filtered.json\n")
+# --- 8️⃣ Output JSON ---
+print(json.dumps(result_json, indent=2))

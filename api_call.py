@@ -4,15 +4,11 @@ from consts import global_consts as gc
 
 API_KEY = "c45c4f7d3cf56a3173d13c30180aa40a"
 
-
 def run():
     DATE = gc.PRESENT_DAY_YMD
     URL = f"https://v3.football.api-sports.io/fixtures?date={DATE}"
 
-    headers = {
-        "x-apisports-key": API_KEY
-    }
-
+    headers = {"x-apisports-key": API_KEY}
     csv_file = "api_match.csv"
 
     try:
@@ -20,14 +16,14 @@ def run():
         response.raise_for_status()
 
         fixtures = response.json().get("response", [])
-
         print(f"Total matches on {DATE}: {len(fixtures)}\n")
 
         with open(csv_file, mode="w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
 
-            # CSV Header
+            # CSV Header (added Fixture ID)
             writer.writerow([
+                "Fixture ID",
                 "League",
                 "League Logo",
                 "League Flag",
@@ -40,6 +36,7 @@ def run():
             ])
 
             for match in fixtures:
+                fixture_id = match.get("fixture", {}).get("id")
                 league = match.get("league", {})
                 teams = match.get("teams", {})
                 goals = match.get("goals", {})
@@ -61,6 +58,7 @@ def run():
                 score_away = goals.get("away")
 
                 writer.writerow([
+                    fixture_id,
                     league_name,
                     league_logo,
                     league_flag,
@@ -73,7 +71,7 @@ def run():
                 ])
 
                 print(
-                    f"{league_name} | "
+                    f"{fixture_id} | {league_name} | "
                     f"{home_name} {score_home} - {score_away} {away_name}"
                 )
 
