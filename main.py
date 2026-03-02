@@ -31,7 +31,7 @@ logging.basicConfig(
 # ==================================================
 DEFAULT_INTERVAL = 3600        # 1 hour
 LONG_INTERVAL = 18 * 3600     # 18 hours
-TASK_DELAY = 5                # seconds between tasks
+TASK_DELAY = 15               # seconds between tasks
 
 running = True
 
